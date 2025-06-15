@@ -1,12 +1,11 @@
+// src/app.controller.ts
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
 
-@Controller()
+@Controller("users")
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  getUsers(): string {
+    console.log("User access attempted on root path /users");
+    return "User access granted from main controller!";
   }
 }
