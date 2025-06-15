@@ -1,15 +1,18 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { PrismaService } from './prisma/prisma.service'; // Import your PrismaService
+// Removed: import { AppService } from './app.service'; // Delete this line
+import { UsersModule } from './users/users.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
-    // Your feature modules would go here, e.g., UsersModule
+    PrismaModule,
+    UsersModule,
+    FilesModule,
   ],
   controllers: [AppController],
-  providers: [
-    PrismaService, // Make PrismaService available throughout your application
-  ],
+  providers: [], // Removed AppService from here
 })
 export class AppModule {}

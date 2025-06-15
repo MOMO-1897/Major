@@ -1,11 +1,12 @@
+// src/app.controller.ts
 import { Controller, Get } from '@nestjs/common';
 
-@Controller("users")
-export class AppController {
+@Controller("users") // This controller handles requests to the /users path
+export class AppController { // You might want to rename this to UsersController for clarity
   
-  @Get()
-  getUsers(): void {
+  @Get() // This method handles GET requests to /users
+  getUsers(): string { // Changed return type to string, or you can use `any` or an interface
     console.log("user access");
-    // No return statement - browser gets empty response
+    return "User access granted!"; // Add a return statement here
   }
 }
