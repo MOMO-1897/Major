@@ -1,34 +1,66 @@
 // src/files/files.service.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join, extname } from 'path'; // Import extname
+import { diskStorage } from 'multer';
+import { existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class FilesService {
-  private readonly uploadPath = join(__dirname, '..', '..', 'uploads'); // Path to the 'uploads' folder
+  // No longer a class property, nor using OnModuleInit for this path
+  // private uploadsDir: string;
 
   constructor() {
-    if (!existsSync(this.uploadPath)) {
-      mkdirSync(this.uploadPath, { recursive: true });
+    // Calculate the uploads directory synchronously when the service is instantiated
+    const initialUploadsDir = join(process.cwd(), 'uploads');
+    console.log(`[FilesService Constructor] Ensuring uploads directory exists at: ${initialUploadsDir}`);
+
+    // Ensure the directory exists
+    if (!existsSync(initialUploadsDir)) {
+      mkdirSync(initialUploadsDir, { recursive: true });
+      console.log(`[FilesService Constructor] Created uploads directory: ${initialUploadsDir}`);
     }
   }
 
-  async saveFile(file: Express.Multer.File): Promise<string> {
-    if (!file || !file.buffer) { // Check for buffer as well, since we're using memory storage in controller
-      throw new BadRequestException('No file buffer provided for saving.');
-    }
+  get multerStorage() {
+    return diskStorage({
+      destination: (req, file, cb) => {
+        // Calculate the uploads directory *every time* a file needs to be stored
+        // This guarantees the path is always a valid string at the point of use.
+        const uploadsDestinationPath = join(process.cwd(), 'uploads');
+        console.log('[Multer Destination] Calculated uploadsDestinationPath:', uploadsDestinationPath);
+        cb(null, uploadsDestinationPath); // Provide the calculated path to Multer
+      },
+      filename: (req, file, cb) => {
+        console.log('[Multer Filename] Called.');
+        console.log('[Multer Filename] Original filename:', file.originalname);
+        console.log('[Multer Filename] Mime type:', file.mimetype);
 
-    const fileExtension = extname(file.originalname); // Use extname for robustness
-    const uniqueFilename = `${uuidv4()}${fileExtension}`;
-    const filePath = join(this.uploadPath, uniqueFilename);
+        const parts = file.originalname.split('.');
+        console.log('[Multer Filename] Parts after split:', parts);
 
-    try {
-      writeFileSync(filePath, file.buffer);
-      return `/uploads/${uniqueFilename}`; // Return the public URL path
-    } catch (error) {
-      console.error('Error saving file:', error);
-      throw new BadRequestException('Could not save file.');
+        const fileExtension = parts.length > 1 ? parts.pop() : '';
+        console.log('[Multer Filename] Extracted file extension:', fileExtension);
+
+        const ext = fileExtension ? `.${fileExtension}` : '';
+        console.log('[Multer Filename] Constructed extension string:', ext);
+
+        const uniqueFileName = `${uuidv4()}${ext}`;
+        console.log('[Multer Filename] Generated unique filename:', uniqueFileName);
+
+        cb(null, uniqueFileName);
+      },
+    });
+  }
+
+  static imageFileFilter(req: any, file: any, callback: any) {
+    console.log('[Image File Filter] Called.');
+    console.log('[Image File Filter] File Originalname:', file.originalname);
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+      console.log('[Image File Filter] File rejected:', file.originalname);
+      return callback(new BadRequestException('Only image files are allowed!'), false);
     }
+    console.log('[Image File Filter] File accepted:', file.originalname);
+    callback(null, true);
   }
 }
