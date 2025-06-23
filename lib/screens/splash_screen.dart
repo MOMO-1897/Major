@@ -22,25 +22,16 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF4CAF50),
-      body: Stack(
-        children: [
-          // Positioned logo
-          Positioned(
-            top: 301,
-            left: 56,
-            child: SizedBox(
-              width: 263,
-              height: 210.81,
-              child: Image.asset(
-                'assets/icons/logo.png',
-                fit: BoxFit.contain,
-              ),
-            ),
+      body: Center(
+        child: SizedBox(
+          width: 263,
+          height: 210.81,
+          child: Image.asset(
+            'assets/icons/logo.png',
+            fit: BoxFit.contain,
           ),
-
-          //
-          ],
         ),
+      ),
     );
   }
 }

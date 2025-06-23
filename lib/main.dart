@@ -30,23 +30,27 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/profile-setup': (context) {
           final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-          return ProfileSetupScreen(); // Make sure this screen exists
+          // CORRECTED: Use initialSignUpData instead of profileData
+          return ProfileSetupScreen(initialSignUpData: args);
         },
         '/profile-setup-1': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
+          // Note: The userType argument was handled differently previously.
+          // Now, `initialSignUpData` map is passed, which contains 'roleName'.
           String userType;
           if (args is Map<String, dynamic>) {
-            userType = args['role'] as String? ?? 'farmer';
+            userType = args['roleName'] as String? ?? 'FARMER'; // Use 'roleName' from the map
           } else {
-            userType = args as String? ?? 'farmer';
+            userType = args as String? ?? 'FARMER';
           }
-          return ProfileSetup1Screen(userType: userType);
+          return ProfileSetup1Screen(initialSignUpData: args as Map<String, dynamic>?); // Pass the whole map
         },
         '/profile-setup-2': (context) {
           final profileData = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
           return ProfileSetup2Screen(profileData: profileData);
         },
         '/home': (context) => HomeScreen(),
+        '/certification-success': (context) => CertificationSuccessScreen(),
       },
     );
   }

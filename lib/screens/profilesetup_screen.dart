@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../services/auth_service.dart';
+import '../models/api_response.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
-  final Map<String, dynamic>? profileData;
+  final Map<String, dynamic>? initialSignUpData;
 
-  const ProfileSetupScreen({Key? key, this.profileData}) : super(key: key);
+  const ProfileSetupScreen({Key? key, this.initialSignUpData}) : super(key: key);
 
   @override
   _ProfileSetupScreenState createState() => _ProfileSetupScreenState();
@@ -14,6 +18,137 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _farmNameController = TextEditingController();
+
+  File? _profileImage;
+  bool _isLoading = false;
+
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    print('ProfileSetupScreen initialized with data: ${widget.initialSignUpData}');
+  }
+
+  // Function to pick an image from gallery
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxHeight: 1024,
+        maxWidth: 1024,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _profileImage = File(pickedFile.path);
+        });
+        print('Profile image selected: ${pickedFile.path}');
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to pick image: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Function to handle profile completion and API call
+  Future<void> _completeProfile() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Check for profile image
+    if (_profileImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please upload a profile picture.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Extract data from previous step
+      final String username = widget.initialSignUpData?['username']?.toString().trim() ?? '';
+      final String password = widget.initialSignUpData?['password']?.toString().trim() ?? '';
+      final String roleName = widget.initialSignUpData?['roleName']?.toString().trim() ?? 'FARMER';
+
+      print('Starting registration with:');
+      print('Username: $username');
+      print('Role: $roleName');
+      print('Full Name: ${_fullNameController.text.trim()}');
+      print('Phone: ${_phoneController.text.trim()}');
+      print('Farm Name: ${_farmNameController.text.trim()}');
+
+      // Validate required data from previous step
+      if (username.isEmpty || password.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: Missing username or password from previous step.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final ApiResponse<dynamic> response = await AuthService.register(
+        username: username,
+        password: password,
+        fullName: _fullNameController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        roleName: roleName,
+        farmName: _farmNameController.text.trim(),
+        profilePicture: _profileImage!,
+        specialization: null,
+        certificationImage: null,
+      );
+
+      print('Registration response: ${response.success}, ${response.message}');
+
+      if (response.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Profile setup complete! Please log in.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/login',
+              (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Profile setup failed: ${response.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Exception during profile setup: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An error occurred during profile setup: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,12 +164,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               children: [
                 SizedBox(height: 40),
                 // Title
-                Text(
-                  'Complete Your Profile',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                Center(
+                  child: Text(
+                    'Complete Your Profile',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 SizedBox(height: 12),
@@ -43,71 +181,75 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
-                    height: 1.4,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 40),
-                // Profile Picture
+                // Profile Picture Picker
                 Center(
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Colors.grey[500],
+                  child: GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[300]!, width: 2),
+                      ),
+                      child: _profileImage != null
+                          ? ClipOval(
+                        child: Image.file(
+                          _profileImage!,
+                          fit: BoxFit.cover,
+                          width: 120,
+                          height: 120,
+                        ),
+                      )
+                          : Icon(
+                        Icons.camera_alt,
+                        size: 50,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ),
                 ),
                 SizedBox(height: 40),
-                // Full Name Field
+                // Full Name Input
                 Text(
                   'Full Name',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 SizedBox(height: 8),
                 TextFormField(
                   controller: _fullNameController,
                   decoration: InputDecoration(
-                    hintText: 'Enter Your Full Name',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    hintText: 'Enter your full name',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.green[600]!),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your full name';
+                    }
+                    if (value.trim().length < 2) {
+                      return 'Full name must be at least 2 characters';
                     }
                     return null;
                   },
                 ),
                 SizedBox(height: 24),
-                // Phone Number Field
+                // Phone Number Input
                 Text(
                   'Phone Number',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 SizedBox(height: 8),
@@ -115,74 +257,62 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    hintText: 'Enter Your Phone Number',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    hintText: 'Enter your phone number',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.green[600]!),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your phone number';
+                    }
+                    String cleanedValue = value.trim().replaceAll(RegExp(r'[^\d]'), '');
+                    if (cleanedValue.length < 10) {
+                      return 'Phone number must be at least 10 digits';
+                    }
+                    if (!RegExp(r'^[0-9+\-\s()]*$').hasMatch(value.trim())) {
+                      return 'Please enter a valid phone number';
                     }
                     return null;
                   },
                 ),
                 SizedBox(height: 24),
-                // Farm Name Field
+                // Farm Name Input
                 Text(
-                  'Farm Name (Optional)',
+                  'Farm Name',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 SizedBox(height: 8),
                 TextFormField(
                   controller: _farmNameController,
                   decoration: InputDecoration(
-                    hintText: 'Enter Your Farm Name',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    hintText: 'Enter your farm name',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.green[600]!),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your farm name';
+                    }
+                    if (value.trim().length < 2) {
+                      return 'Farm name must be at least 2 characters';
+                    }
+                    return null;
+                  },
                 ),
                 SizedBox(height: 50),
+                // Complete Profile Button
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          '/home',
-                              (route) => false,
-                        );
-                      }
-                    },
+                    onPressed: _isLoading ? null : _completeProfile,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[600],
                       shape: RoundedRectangleBorder(
@@ -190,7 +320,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: Text(
+                    child: _isLoading
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : Text(
                       'Complete Profile',
                       style: TextStyle(
                         fontSize: 16,

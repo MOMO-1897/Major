@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../services/auth_service.dart';
+import '../models/api_response.dart';
 
 class ProfileSetup2Screen extends StatefulWidget {
   final Map<String, dynamic>? profileData;
@@ -10,26 +14,128 @@ class ProfileSetup2Screen extends StatefulWidget {
 }
 
 class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
-  bool _isFileSelected = false;
-  String _selectedFileName = '';
+  File? _certificationImage;
+  bool _isLoading = false;
+  final ImagePicker _picker = ImagePicker();
 
-  void _selectFile() {
-    // Simulate file selection
+  // Function to pick a certification image
+  Future<void> _pickCertificationImage() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (pickedFile != null) {
+      setState(() {
+        _certificationImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  // Function to handle certification submission and API call
+  Future<void> _submitCertification() async {
+    if (_certificationImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please upload a certification file.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
-      _isFileSelected = true;
-      _selectedFileName = 'certification_document.pdf';
+      _isLoading = true;
     });
+
+    try {
+      final String username = (widget.profileData?['username'] ?? '').toString();
+      final String password = (widget.profileData?['password'] ?? '').toString();
+      final String fullName = (widget.profileData?['fullName'] ?? '').toString();
+      final String phoneNumber = (widget.profileData?['phoneNumber'] ?? '').toString();
+      final String roleName = (widget.profileData?['roleName'] ?? 'SPECIALIST').toString();
+      final String specialization = (widget.profileData?['specialization'] ?? '').toString();
+      final File? profilePicture = widget.profileData?['profilePicture'] as File?;
+
+      // Basic validation for data from previous screens
+      if (username.isEmpty || password.isEmpty || fullName.isEmpty ||
+          phoneNumber.isEmpty || specialization.isEmpty || profilePicture == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: Missing required data from previous steps. Please go back and fill all details.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Call the register method from AuthService
+      final ApiResponse<dynamic> response = await AuthService.register(
+        username: username,
+        password: password,
+        fullName: fullName,
+        phoneNumber: phoneNumber,
+        roleName: roleName,
+        specialization: specialization,
+        profilePicture: profilePicture,
+        certificationImage: _certificationImage,
+        farmName: null, // Not needed for specialists
+      );
+
+      if (response.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Certification submitted successfully! Your profile will be reviewed.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/certification-success',
+                (route) => false,
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Certification submission failed: ${response.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('An error occurred during submission: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Determine file name for display
+    String selectedFileName = _certificationImage != null ? _certificationImage!.path.split('/').last : '';
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Profile Setup (Step 2)', // Corrected from design's "Step 1"
+          'Profile Setup (Step 2)',
           style: TextStyle(color: Colors.black),
         ),
         bottom: PreferredSize(
@@ -37,7 +143,7 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Container(
-              width: MediaQuery.of(context).size.width, // Full width for completion
+              width: MediaQuery.of(context).size.width,
               height: 4.0,
               color: Colors.green[600],
             ),
@@ -73,7 +179,7 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
                 child: Column(
                   children: [
                     GestureDetector(
-                      onTap: _selectFile,
+                      onTap: _pickCertificationImage,
                       child: Container(
                         width: 120,
                         height: 120,
@@ -85,8 +191,14 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
                             width: 2,
                           ),
                         ),
-                        child: Icon(
-                          _isFileSelected ? Icons.check_circle : Icons.add,
+                        child: _certificationImage != null
+                            ? Icon(
+                          Icons.check_circle,
+                          size: 40,
+                          color: Colors.green[600],
+                        )
+                            : Icon(
+                          Icons.add,
                           size: 40,
                           color: Colors.green[600],
                         ),
@@ -94,17 +206,17 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      _isFileSelected ? 'File Selected' : 'Upload an certification file',
+                      _certificationImage != null ? 'File Selected' : 'Upload an certification file (Required)',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
                       ),
                     ),
-                    if (_isFileSelected) ...[
+                    if (_certificationImage != null) ...[
                       const SizedBox(height: 8),
                       Text(
-                        _selectedFileName,
+                        selectedFileName,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -113,7 +225,7 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
                     ],
                     const SizedBox(height: 8),
                     Text(
-                      'Supported Formats: JPG, PNG, PDF',
+                      'Supported Formats: JPG, PNG, PDF (ensure backend supports PDF via image picker)',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[500],
@@ -157,20 +269,17 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _isFileSelected ? () {
-                    Navigator.pushNamed(
-                      context,
-                      '/certification-success',
-                    );
-                  } : null,
+                  onPressed: _isLoading ? null : _submitCertification,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isFileSelected ? Colors.green[600] : Colors.grey[400],
+                    backgroundColor: (_certificationImage != null && !_isLoading) ? Colors.green[600] : Colors.grey[400],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
+                  child: _isLoading
+                      ? CircularProgressIndicator(color: Colors.white)
+                      : const Text(
                     'Submit Certification',
                     style: TextStyle(
                       fontSize: 16,
