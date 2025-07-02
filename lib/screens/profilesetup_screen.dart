@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../services/auth_service.dart';
@@ -18,6 +21,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _farmNameController = TextEditingController();
+  List<String> _districts = [];
+  String? _selectedDistrict;
 
   File? _profileImage;
   bool _isLoading = false;
@@ -28,6 +33,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   void initState() {
     super.initState();
     print('ProfileSetupScreen initialized with data: ${widget.initialSignUpData}');
+    loadDistricts().then((list) {
+      list.sort((a,b) => a.compareTo(b));
+      setState(() {
+        _districts = list;
+      });
+    });
   }
 
   // Function to pick an image from gallery
@@ -89,6 +100,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       print('Full Name: ${_fullNameController.text.trim()}');
       print('Phone: ${_phoneController.text.trim()}');
       print('Farm Name: ${_farmNameController.text.trim()}');
+      print('Farm Location: ${_selectedDistrict}');
 
       // Validate required data from previous step
       if (username.isEmpty || password.isEmpty) {
@@ -148,6 +160,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<List<String>> loadDistricts() async {
+    final String jsonString = await rootBundle.loadString('assets/districts.json');
+    final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
+    final List<dynamic> districtsList = jsonMap['districts'];
+    return districtsList.cast<String>();
   }
 
   @override
@@ -302,6 +321,45 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     }
                     if (value.trim().length < 2) {
                       return 'Farm name must be at least 2 characters';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 24),
+                // Farm Name Input
+                Text(
+                  'Farm Location',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: _selectedDistrict,
+                  items: _districts.map((district) {
+                    return DropdownMenuItem<String>(
+                      value: district,
+                      child: Text(
+                        district[0].toUpperCase() + district.substring(1), // Capitalize first letter for UI
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDistrict = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Select your farm district',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select your farm location';
                     }
                     return null;
                   },

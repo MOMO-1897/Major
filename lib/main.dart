@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:major/screens/Maps/soil_map_screen.dart';
+import 'package:major/screens/Message/chat_list.dart';
 import 'package:major/screens/splash_screen.dart';
 import 'package:major/screens/login_screen.dart';
 import 'package:major/screens/signup_screen.dart';
@@ -9,8 +12,13 @@ import 'package:major/screens/profilesetup2_screen.dart';
 import 'package:major/screens/certification_screen.dart';
 import 'package:major/screens/welcome_screen.dart';
 
+
 void main() {
-  runApp(MyApp());
+  runApp(
+      ProviderScope(
+          child: MyApp()
+      )
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -51,6 +59,7 @@ class MyApp extends StatelessWidget {
         },
         '/home': (context) => HomeScreen(),
         '/certification-success': (context) => CertificationSuccessScreen(),
+        '/chat_list': (context) => ChatListScreen(),
       },
     );
   }

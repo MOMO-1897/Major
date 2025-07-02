@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 
-class AllReportsScreen extends StatefulWidget {
+class HomeTab extends StatefulWidget {
+  const HomeTab({super.key});
+
   @override
-  _AllReportsScreenState createState() => _AllReportsScreenState();
+  _HomeTabState createState() => _HomeTabState();
 }
 
-class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  int _currentIndex = 4;
-
-  final List<Map<String, dynamic>> _allReports = [
+class _HomeTabState extends State<HomeTab> {
+  final List<Map<String, dynamic>> _recentReports = [
     {
       'title': 'Wheat Leaf Rust',
       'time': '12hrs ago',
@@ -40,103 +39,144 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
       'categoryColor': Colors.red,
       'imageUrl': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
     },
-    {
-      'title': 'Corn Blight Disease',
-      'time': '1 day ago',
-      'description': 'Brown spots appearing on corn leaves with rapid spread...',
-      'status': 'Scheduled',
-      'statusColor': Colors.green[100]!,
-      'category': 'Crop',
-      'categoryColor': Colors.red,
-      'imageUrl': 'https://images.unsplash.com/photo-1551782450-17144efb9c50?w=400&h=200&fit=crop',
-    },
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(
-              'All Reports',
+    return SingleChildScrollView(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome, John Doe',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey[800],
               ),
             ),
-          ),
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              labelColor: Colors.green[600],
-              unselectedLabelColor: Colors.grey[500],
-              indicatorColor: Colors.green[600],
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              tabs: [
-                Tab(text: 'All Reports'),
-                Tab(text: 'Pending'),
-                Tab(text: 'Scheduled'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
+            SizedBox(height: 24),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.2,
               children: [
-                _buildReportsList('all'),
-                _buildReportsList('pending'),
-                _buildReportsList('scheduled'),
+                _buildFeatureCard(
+                  'Submit Issue',
+                  'Get Started',
+                  Icons.eco,
+                  Colors.green[100]!,
+                  Colors.green[600]!,
+                      () {
+                    Navigator.pushNamed(context, '/submit-crop-issue');
+                  },
+                ),
+                _buildFeatureCard(
+                  'View Soil Map',
+                  'Explore',
+                  Icons.map,
+                  Colors.blue[100]!,
+                  Colors.blue[600]!,
+                      () {
+                    Navigator.pushNamed(context, '/soil-map');
+                  },
+                ),
+                _buildFeatureCard(
+                  'IOT Soil Data',
+                  'Get Started',
+                  Icons.sensors,
+                  Colors.orange[100]!,
+                  Colors.orange[600]!,
+                      () {
+                    Navigator.pushNamed(context, '/soil-test');
+                  },
+                ),
+                _buildFeatureCard(
+                  'AI Diagnosis',
+                  'Get Started',
+                  Icons.psychology,
+                  Colors.red[100]!,
+                  Colors.red[600]!,
+                      () {
+                    Navigator.pushNamed(context, '/ai-diagnosis');
+                  },
+                ),
               ],
             ),
-          ),
-        ],
-      );
+            SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Reports',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/all-reports');
+                  },
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      color: Colors.green[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            ..._recentReports.map((report) => Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: _buildReportCard(report),
+            )).toList(),
+          ],
+        ),
+    );
   }
 
-  Widget _buildReportsList(String filter) {
-    List<Map<String, dynamic>> filteredReports;
-
-    switch (filter) {
-      case 'pending':
-        filteredReports = _allReports.where((report) => report['status'] == 'Pending').toList();
-        break;
-      case 'scheduled':
-        filteredReports = _allReports.where((report) => report['status'] == 'Scheduled').toList();
-        break;
-      default:
-        filteredReports = _allReports;
-    }
-
-    return ListView.builder(
-      padding: EdgeInsets.all(16),
-      itemCount: filteredReports.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: 16),
-          child: _buildReportCard(filteredReports[index]),
-        );
-      },
+  Widget _buildFeatureCard(String title, String subtitle, IconData icon,
+      Color backgroundColor, Color iconColor, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: iconColor, size: 32),
+            Spacer(),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: iconColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -278,46 +318,4 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
       ),
     );
   }
-
-  // BottomNavigationBar _buildBottomNavigationBar() {
-  //   return BottomNavigationBar(
-  //     type: BottomNavigationBarType.fixed,
-  //     currentIndex: _currentIndex,
-  //     onTap: (index) {
-  //       setState(() {
-  //         _currentIndex = index;
-  //       });
-  //       _handleBottomNavigation(index);
-  //     },
-  //     selectedItemColor: Colors.green[600],
-  //     unselectedItemColor: Colors.grey[400],
-  //     items: [
-  //       BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-  //       BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Soil Map'),
-  //       BottomNavigationBarItem(icon: Icon(Icons.science), label: 'Soil Test'),
-  //       BottomNavigationBarItem(icon: Icon(Icons.psychology), label: 'AI Diagnose'),
-  //       BottomNavigationBarItem(icon: Icon(Icons.description), label: 'Reports'),
-  //     ],
-  //   );
-  // }
-  //
-  // void _handleBottomNavigation(int index) {
-  //   switch (index) {
-  //     case 0:
-  //       Navigator.pushReplacementNamed(context, '/home');
-  //       break;
-  //     case 1:
-  //       Navigator.pushNamed(context, '/soil-map');
-  //       break;
-  //     case 2:
-  //       Navigator.pushNamed(context, '/soil-test');
-  //       break;
-  //     case 3:
-  //       Navigator.pushNamed(context, '/ai-diagnosis');
-  //       break;
-  //     case 4:
-  //     // Already on reports screen
-  //       break;
-  //   }
-  // }
 }
