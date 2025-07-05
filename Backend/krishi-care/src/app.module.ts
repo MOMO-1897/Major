@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { UsersModule } from './users/users.module';
 import { FilesModule } from './files/files.module';
 import { AuthModule } from './auth/auth.module';
+import { ReportsModule } from './reports/reports.module'; // Ensure ReportsModule is imported
 import { MongooseModule, InjectModel } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -36,6 +37,7 @@ import { Model } from 'mongoose';
     UsersModule,
     FilesModule,
     AuthModule,
+    ReportsModule, // Ensure ReportsModule is included here
 
     // Serve static files (e.g., uploaded profile pictures, certification images)
     ServeStaticModule.forRoot({
@@ -60,26 +62,43 @@ export class AppModule implements OnModuleInit {
   async onModuleInit() {
     console.log('[AppModule] Ensuring roles exist in MongoDB...');
     try {
-      // Upsert (update or insert) the FARMER role
-      // $setOnInsert ensures these fields are only set if a new document is inserted
-      // We no longer manually set createdAt/updatedAt here, Mongoose handles them due to { timestamps: true } in schema
-      await this.roleModel.findOneAndUpdate(
-        { name: RoleType.FARMER }, // Query to find if FARMER role exists
-        { $setOnInsert: { name: RoleType.FARMER } }, // Fields to set if inserting new document
-        { upsert: true, new: true, setDefaultsOnInsert: true } // upsert creates if not found; new returns modified document; setDefaultsOnInsert applies schema defaults
-      );
+      // Find existing roles to avoid duplicate inserts
+      const existingRoles = await this.roleModel.find({ name: { $in: [RoleType.FARMER, RoleType.SPECIALIST] } }).exec();
+      const existingRoleNames = new Set(existingRoles.map(role => role.name));
 
-      // Upsert (update or insert) the SPECIALIST role
-      await this.roleModel.findOneAndUpdate(
-        { name: RoleType.SPECIALIST }, // Query to find if SPECIALIST role exists
-        { $setOnInsert: { name: RoleType.SPECIALIST } }, // Fields to set if inserting new document
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      );
+      // Explicitly type rolesToInsert to avoid 'never[]' inference
+      const rolesToInsert: { name: RoleType }[] = []; // FIX: Added explicit type
+
+      // Check if FARMER role is missing and add to array if so
+      if (!existingRoleNames.has(RoleType.FARMER)) {
+        rolesToInsert.push({ name: RoleType.FARMER });
+      }
+      // Check if SPECIALIST role is missing and add to array if so
+      if (!existingRoleNames.has(RoleType.SPECIALIST)) {
+        rolesToInsert.push({ name: RoleType.SPECIALIST });
+      }
+
+      // If there are roles to insert, perform the insertion
+      if (rolesToInsert.length > 0) {
+        await this.roleModel.insertMany(rolesToInsert, { ordered: false }); // ordered: false allows inserting remaining documents even if one fails
+        // FIX: Ensure 'r' is typed correctly in map function
+        console.log(`[AppModule] Inserted new roles: ${rolesToInsert.map((r: { name: RoleType }) => r.name).join(', ')}`);
+      } else {
+        console.log('[AppModule] All required roles already exist.');
+      }
+
       console.log('[AppModule] Roles ensured successfully in MongoDB.');
     } catch (error) {
       // Log any errors during the role seeding process
       console.error('[AppModule] Error during automatic role seeding for MongoDB:', error);
-      // Depending on your production needs, you might re-throw or handle this error more gracefully
+      // For unique constraint errors (code 11000), it means another process might have inserted it concurrently.
+      // This is usually harmless for seeding.
+      if (error.code === 11000) {
+        console.warn('[AppModule] Role seeding encountered a duplicate key error, likely due to concurrent insert. This is usually harmless.');
+      } else {
+        // Re-throw other unexpected errors to ensure they are noticed
+        throw error;
+      }
     }
   }
 }
