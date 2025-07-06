@@ -11,13 +11,18 @@ import { join } from 'path';
 import * as mongoose from 'mongoose';
 import { Role, RoleDocument, RoleSchema, RoleType } from './schemas/role.schema';
 import { Model } from 'mongoose';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+
     // --- Mongoose Database Connection ---
     // Hardcoded connection string for local MongoDB
     // WARNING: Not suitable for production. Use environment variables for secure credentials.
-    MongooseModule.forRoot('mongodb://localhost:27017/krishicare_db'),
+    MongooseModule.forRoot('mongodb://127.0.0.1:27017/krishicare_db'),
 
     // Register Role schema here so it can be injected and used in AppModule's onModuleInit
     MongooseModule.forFeature([
@@ -52,7 +57,7 @@ export class AppModule implements OnModuleInit {
   constructor(
     // Inject the Mongoose Role Model to perform seeding operations
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
-  ) {}
+  ) { }
 
   /**
    * onModuleInit hook is called once all modules have been initialized.
