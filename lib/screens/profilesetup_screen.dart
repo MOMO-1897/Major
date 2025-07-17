@@ -120,6 +120,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         phoneNumber: _phoneController.text.trim(),
         roleName: roleName,
         farmName: _farmNameController.text.trim(),
+        farmLocation: _selectedDistrict,
         profilePicture: _profileImage!,
         specialization: null,
         certificationImage: null,

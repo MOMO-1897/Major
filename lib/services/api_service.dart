@@ -58,6 +58,7 @@ class ApiService {
     required String phoneNumber,
     required String roleName,
     String? farmName,
+    String? farmLocation,
     String? specialization,
     File? profilePicture,
     File? certificationImage,
@@ -76,6 +77,9 @@ class ApiService {
       // Add role-specific fields
       if (farmName != null && farmName.isNotEmpty && roleName.toUpperCase() == 'FARMER') {
         request.fields['farmName'] = farmName.trim();
+      }
+      if (farmLocation != null && farmLocation.isNotEmpty && roleName.toUpperCase() == 'FARMER') {
+        request.fields['farmLocation'] = farmLocation.trim();
       }
       if (specialization != null && specialization.isNotEmpty && roleName.toUpperCase() == 'SPECIALIST') {
         request.fields['specialization'] = specialization.trim();

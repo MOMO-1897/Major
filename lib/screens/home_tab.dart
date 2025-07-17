@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'all_reports_screen.dart';
 
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key});
+  final VoidCallback onViewAllPressed;
+
+  const HomeTab({super.key, required this.onViewAllPressed});
 
   @override
   _HomeTabState createState() => _HomeTabState();
@@ -120,9 +123,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/all-reports');
-                  },
+                  onTap: widget.onViewAllPressed,
                   child: Text(
                     'View All',
                     style: TextStyle(

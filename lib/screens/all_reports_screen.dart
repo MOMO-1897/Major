@@ -13,49 +13,57 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
     {
       'title': 'Wheat Leaf Rust',
       'time': '12hrs ago',
-      'description': 'What could be causing yellowing leaves and stunted growth in my tomato plants...',
+      'description':
+      'What could be causing yellowing leaves and stunted growth in my tomato plants...',
       'status': 'Scheduled',
       'statusColor': Colors.green[100]!,
       'category': 'Soil',
       'categoryColor': Colors.blue,
-      'imageUrl': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
+      'imageUrl':
+      'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
     },
     {
       'title': 'Spots on Tomato',
       'time': '12hrs ago',
-      'description': 'What could be causing yellowing leaves and stunted growth in my tomato plants...',
+      'description':
+      'What could be causing yellowing leaves and stunted growth in my tomato plants...',
       'status': 'Pending',
       'statusColor': Colors.orange[100]!,
       'category': 'Crop',
       'categoryColor': Colors.red,
-      'imageUrl': 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400&h=200&fit=crop',
+      'imageUrl':
+      'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400&h=200&fit=crop',
     },
     {
       'title': 'Wheat Leaf Rust',
       'time': '12hrs ago',
-      'description': 'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'status': 'Pending',
-      'statusColor': Colors.orange[100]!,
+      'description':
+      'What could be causing yellowing leaves and stunted growth in my tomato plants...',
+      'status': 'Completed',
+      'statusColor': Colors.grey[300]!,
       'category': 'Crop',
       'categoryColor': Colors.red,
-      'imageUrl': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
+      'imageUrl':
+      'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
     },
     {
       'title': 'Corn Blight Disease',
       'time': '1 day ago',
-      'description': 'Brown spots appearing on corn leaves with rapid spread...',
+      'description':
+      'Brown spots appearing on corn leaves with rapid spread...',
       'status': 'Scheduled',
       'statusColor': Colors.green[100]!,
       'category': 'Crop',
       'categoryColor': Colors.red,
-      'imageUrl': 'https://images.unsplash.com/photo-1551782450-17144efb9c50?w=400&h=200&fit=crop',
+      'imageUrl':
+      'https://images.unsplash.com/photo-1551782450-17144efb9c50?w=400&h=200&fit=crop',
     },
   ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -66,18 +74,44 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Material(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: EdgeInsets.all(16.0),
-            child: Text(
-              'All Reports',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Reports',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Add new report action
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[600],
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Add New +',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           Container(
@@ -94,9 +128,10 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               tabs: [
-                Tab(text: 'All Reports'),
+                Tab(text: 'All'),
                 Tab(text: 'Pending'),
                 Tab(text: 'Scheduled'),
+                Tab(text: 'Completed'),
               ],
             ),
           ),
@@ -107,11 +142,13 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                 _buildReportsList('all'),
                 _buildReportsList('pending'),
                 _buildReportsList('scheduled'),
+                _buildReportsList('completed'),
               ],
             ),
           ),
         ],
-      );
+      ),
+    );
   }
 
   Widget _buildReportsList(String filter) {
@@ -119,10 +156,16 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
 
     switch (filter) {
       case 'pending':
-        filteredReports = _allReports.where((report) => report['status'] == 'Pending').toList();
+        filteredReports =
+            _allReports.where((report) => report['status'] == 'Pending').toList();
         break;
       case 'scheduled':
-        filteredReports = _allReports.where((report) => report['status'] == 'Scheduled').toList();
+        filteredReports =
+            _allReports.where((report) => report['status'] == 'Scheduled').toList();
+        break;
+      case 'completed':
+        filteredReports =
+            _allReports.where((report) => report['status'] == 'Completed').toList();
         break;
       default:
         filteredReports = _allReports;
@@ -209,7 +252,11 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                     child: Text(
                       report['status'],
                       style: TextStyle(
-                        color: report['status'] == 'Scheduled' ? Colors.green[700] : Colors.orange[700],
+                        color: report['status'] == 'Scheduled'
+                            ? Colors.green[700]
+                            : report['status'] == 'Completed'
+                            ? Colors.grey[800]
+                            : Colors.orange[700],
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),

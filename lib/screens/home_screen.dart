@@ -14,13 +14,32 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    HomeTab(),
-    SoilMap(),
-    SoilTestScreen(),
-    AiDiagnosisScreen(),
-    AllReportsScreen(),
-  ];
+  // final List<Widget> _screens = [
+  //   HomeTab(),
+  //   SoilMap(),
+  //   SoilTestScreen(),
+  //   AiDiagnosisScreen(),
+  //   AllReportsScreen(),
+  // ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeTab(
+        onViewAllPressed: () {
+          setState(() {
+            _currentIndex = 4;
+          });
+        },
+      ),
+      SoilMap(),
+      SoilTestScreen(),
+      AiDiagnosisScreen(),
+      AllReportsScreen(),
+    ];
+  }
 
   void _onTabTapped(int index) {
     setState(() {
@@ -29,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   bool _shouldAllowBack() {
-    return _currentIndex != 0; // you decide
+    return _currentIndex != 0;
   }
 
   Future<bool> _showExitConfirmation() {
@@ -49,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: _shouldAllowBack(), // synchronous boolean
+      canPop: _shouldAllowBack(),
       onPopInvokedWithResult: (didPop, result) async {
         if (!didPop) {
           final ok = await _showExitConfirmation();
@@ -92,7 +111,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        // IndexedStack keeps all tabs alive and only shows the current one
         body: IndexedStack(
           index: _currentIndex,
           children: _screens,

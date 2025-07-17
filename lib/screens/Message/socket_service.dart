@@ -1,3 +1,4 @@
+import 'package:major/services/storage_service.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class SocketService {
@@ -5,50 +6,74 @@ class SocketService {
   factory SocketService() => _instance;
   SocketService._internal();
 
-  late IO.Socket socket;
+  IO.Socket? _socket;
 
-  void initSocket() {
-    socket = IO.io(
+  IO.Socket? get socket => _socket;
+
+  Future<void> initSocket() async {
+    final token = await StorageService.getToken();
+    if (token == null) {
+      print("No token found, cannot connect to socket");
+      return;
+    }
+
+    if (_socket != null && _socket!.connected) {
+      print("Socket already connected");
+      return;
+    }
+
+    _socket = IO.io(
       'http://192.168.1.83:4000',
+      //'http://192.168.20.160:4000',
       <String, dynamic>{
         'transports': ['websocket'],
         'autoConnect': false,
+        'auth': {
+          'token': token,
+        },
       },
     );
 
+    _socket!.connect();
 
-    if (socket == null){
-      return;
-    }else {
-      socket.connect();
-    }
-
-    socket.onConnect((_) {
-      print('✅ Connected to socket server');
+    _socket!.onConnect((_) {
+      print('Connected to socket server');
+      print("Token used: $token");
     });
 
-    socket.onDisconnect((_) {
-      print('❌ Disconnected from socket server');
+    _socket!.onDisconnect((_) {
+      print('Disconnected from socket server');
     });
 
-    socket.onConnectError((data) {
-      print('⚠️ Connect error: $data');
+    _socket!.onConnectError((data) {
+      print('Connect error: $data');
     });
 
-    socket.onError((data) {
-      print('⚠️ Socket error: $data');
+    _socket!.onError((data) {
+      print('Socket error: $data');
     });
   }
 
   void sendMessage(Map<String, dynamic> messageData) {
-    socket.emit('send_message', messageData);
+    if (_socket != null && _socket!.connected) {
+      _socket!.emit('send_message', messageData);
+    } else {
+      print("Cannot send message: Socket not connected");
+    }
   }
 
   void listenForMessages(Function(dynamic) callback) {
-    socket.on('receive_message', callback);
+    _socket?.on('receive_message', callback);
   }
 
   void dispose() {
-    socket.dispose();
+    if (_socket != null) {
+      _socket!.dispose();
+      _socket = null;
+      print("Socket connection disposed");
+    }
   }
+
+  bool get isConnected => _socket?.connected ?? false;
 }
+

@@ -76,6 +76,7 @@ class AuthService {
     required String phoneNumber,
     required String roleName,
     String? farmName,
+    String? farmLocation,
     String? specialization,
     File? profilePicture,
     File? certificationImage,
@@ -90,6 +91,10 @@ class AuthService {
       // Validate role-specific requirements
       if (roleName.toUpperCase() == 'FARMER' && (farmName == null || farmName.trim().isEmpty)) {
         return ApiResponse.error('Farm name is required for farmers');
+      }
+
+      if (roleName.toUpperCase() == 'FARMER' && (farmLocation == null || farmLocation.trim().isEmpty)) {
+        return ApiResponse.error('Farm location is required for farmers');
       }
 
       if (roleName.toUpperCase() == 'SPECIALIST' &&
@@ -109,6 +114,7 @@ class AuthService {
         phoneNumber: phoneNumber.trim(),
         roleName: roleName.toUpperCase(),
         farmName: farmName?.trim(),
+        farmLocation: farmLocation,
         specialization: specialization?.trim(),
         profilePicture: profilePicture,
         certificationImage: certificationImage,

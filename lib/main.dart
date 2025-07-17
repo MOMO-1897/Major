@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:major/screens/HomeScreenSpecialist.dart';
 import 'package:major/screens/Maps/soil_map_screen.dart';
 import 'package:major/screens/Message/chat_list.dart';
+import 'package:major/screens/Message/socket_service.dart';
 import 'package:major/screens/splash_screen.dart';
 import 'package:major/screens/login_screen.dart';
 import 'package:major/screens/signup_screen.dart';
@@ -11,9 +13,10 @@ import 'package:major/screens/profilesetup1_screen.dart';
 import 'package:major/screens/profilesetup2_screen.dart';
 import 'package:major/screens/certification_screen.dart';
 import 'package:major/screens/welcome_screen.dart';
+import 'package:major/services/storage_service.dart';
 
 
-void main() {
+void main(){
   runApp(
       ProviderScope(
           child: MyApp()
@@ -58,7 +61,7 @@ class MyApp extends StatelessWidget {
           return ProfileSetup2Screen(profileData: profileData);
         },
         '/home': (context) => HomeScreen(),
-        '/certification-success': (context) => CertificationSuccessScreen(),
+        '/home_specialist': (context) => HomeScreenSpecialist(),
         '/chat_list': (context) => ChatListScreen(),
       },
     );

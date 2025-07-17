@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:major/services/storage_service.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -32,18 +34,47 @@ class _LoginScreenState extends State<LoginScreen> {
       print('Login response: ${response.toString()}');
 
       if (response.success && response.data != null) {
+        final token= await StorageService.getToken();
+        if (token == null) {
+          print("No token found, cannot connect to socket");
+          return;
+        }
+        print(token);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Login successful!'),
             backgroundColor: Colors.green,
           ),
         );
-        await Future.delayed(Duration(milliseconds: 500));
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/home',
-              (route) => false,
-        );
+
+        try {
+          Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
+          if (decodedToken.containsKey('role')) {
+            String role = decodedToken['role'];
+            print('User role from token: $role');
+
+            if (role=="FARMER"){
+              await Future.delayed(Duration(milliseconds: 500));
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/home',
+                    (route) => false,
+              );
+            }else{
+              await Future.delayed(Duration(milliseconds: 500));
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/home_specialist',
+                    (route) => false,
+              );
+            }
+          } else {
+            print('Role claim not found in token.');
+          }
+        } catch (e) {
+          print('Failed to decode token: $e');
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
