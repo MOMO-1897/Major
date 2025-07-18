@@ -16,14 +16,14 @@ type UserWithPopulatedFields = UserDocument & {
 };
 
 @Injectable()
-export class UsersService{
+export class UsersService {
   constructor(
     // Inject Mongoose models
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
     @InjectModel(FarmerProfile.name) private farmerProfileModel: Model<FarmerProfileDocument>,
     @InjectModel(SpecialistProfile.name) private specialistProfileModel: Model<SpecialistProfileDocument>,
-  ) {}
+  ) { }
 
   async onModuleInit() {
     // --- Mongoose Role Seeding (Replaces PrismaService seeding) ---
@@ -31,12 +31,12 @@ export class UsersService{
     try {
       await this.roleModel.findOneAndUpdate(
         { name: RoleType.FARMER },
-        { $setOnInsert: { name: RoleType.FARMER, createdAt: new Date(), updatedAt: new Date() } },
+        { $setOnInsert: { name: RoleType.FARMER } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
       await this.roleModel.findOneAndUpdate(
         { name: RoleType.SPECIALIST },
-        { $setOnInsert: { name: RoleType.SPECIALIST, createdAt: new Date(), updatedAt: new Date() } },
+        { $setOnInsert: { name: RoleType.SPECIALIST } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
       console.log('Roles ensured successfully in MongoDB.');
@@ -72,6 +72,7 @@ export class UsersService{
       roleName,
       profilePictureUrl,
       farmName,
+      farmLocation,
       specialization,
       certificationImage
     } = userData;
@@ -130,8 +131,12 @@ export class UsersService{
         if (typeof farmName !== 'string' || farmName.trim() === '') {
           throw new BadRequestException('Farm name is required for FARMER role.');
         }
+        if (typeof farmLocation !== 'string' || farmLocation.trim() === '') {
+          throw new BadRequestException('Farm location is required for FARMER role.');
+        }
         createdFarmerProfile = await this.farmerProfileModel.create({
           farmName: farmName,
+          farmLocation: farmLocation,
           userId: createdUser._id, // Link to User using its ObjectId
         });
         // Update the User document to link to the new FarmerProfile
@@ -192,5 +197,27 @@ export class UsersService{
 
       throw error;
     }
+  }
+
+  async updateSpecialistLocation(
+    userId: string,
+    locationData: {
+      locationType: string;
+      locationCoordinates: number[];
+      locationUpdatedAt: string;
+    }) {
+    // Convert locationUpdatedAt string to Date object before saving
+    const updatedAt = new Date(locationData.locationUpdatedAt);
+    return this.specialistProfileModel.updateOne(
+      { userId: userId }, // match by userId in SpecialistProfile collection
+      {
+        $set: {
+          locationType: locationData.locationType,
+          locationCoordinates: locationData.locationCoordinates,
+          locationUpdatedAt: updatedAt,
+        },
+      },
+      { upsert: true } // create document if not exists
+    );
   }
 }
