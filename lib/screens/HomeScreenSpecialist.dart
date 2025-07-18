@@ -9,6 +9,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:major/utils/constants.dart';
+import 'package:major/services/storage_service.dart';
 
 class HomeScreenSpecialist extends StatefulWidget {
   const HomeScreenSpecialist({super.key});
@@ -68,19 +70,34 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
     try {
       final settings = LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 50,
+        distanceFilter: 2,
       );
 
+      _positionSubscription?.cancel();
       _positionSubscription = Geolocator.getPositionStream(
         locationSettings: settings,
-      ).listen((position) {
+      ).listen((position) async {
         print('Live coordintes: ${position.latitude}, ${position.longitude}');
+
         // Send to backend or reverse geocode here
-        final body = jsonEncode({
+        final body = {
           'locationType': 'Point',
           'locationCoordinates': [position.longitude, position.latitude],
           'locationUpdatedAt': DateTime.now().toUtc().toIso8601String(),
-        });
+        };
+
+        final token = await StorageService.getToken();
+
+        if (token == null) {
+          print("No token found, cannot connect to socket");
+          return;
+        }
+
+        final success = await sendLocationToBackend(token, body);
+
+        if (!success) {
+          print('Location send failed');
+        }
       });
 
     } catch (e) {
@@ -88,9 +105,10 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
     }
   }
 
-  Future<bool> sendLocationToBackend(String specialistId, String token, Map<String, dynamic> body) async {
-    final url = Uri.parse('https://your-backend.com/api/specialist-profiles/$specialistId/location');
-
+  Future<bool> sendLocationToBackend(String token, Map<String, dynamic> body) async {
+    final url = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.sendLocation}');
+    print(body);
+    print(token);
     try {
       final response = await http.patch(
         url,

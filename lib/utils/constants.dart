@@ -7,4 +7,6 @@ class ApiConstants {
   static const String loginEndpoint = '/auth/login';
   static const String registerEndpoint = '/users';
   static const String uploadsEndpoint = '/uploads';
+  static const String sendLocation = '/users/location';
+
 }
