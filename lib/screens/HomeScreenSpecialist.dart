@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:major/utils/constants.dart';
 import 'package:major/services/storage_service.dart';
+import 'package:geocoding/geocoding.dart';
 
 class HomeScreenSpecialist extends StatefulWidget {
   const HomeScreenSpecialist({super.key});
@@ -70,7 +71,7 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
     try {
       final settings = LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 2,
+        distanceFilter: 15,
       );
 
       _positionSubscription?.cancel();
@@ -79,11 +80,21 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
       ).listen((position) async {
         print('Live coordintes: ${position.latitude}, ${position.longitude}');
 
-        // Send to backend or reverse geocode here
+        String? district;
+        try {
+          final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+          district = placemarks.first.subAdministrativeArea;
+          district = district?.toLowerCase().trim();
+          print('District: $district');
+        } catch (e) {
+          print('Reverse geocoding failed: $e');
+        }
+
         final body = {
           'locationType': 'Point',
           'locationCoordinates': [position.longitude, position.latitude],
           'locationUpdatedAt': DateTime.now().toUtc().toIso8601String(),
+          'district': district,
         };
 
         final token = await StorageService.getToken();
@@ -108,7 +119,6 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
   Future<bool> sendLocationToBackend(String token, Map<String, dynamic> body) async {
     final url = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.sendLocation}');
     print(body);
-    print(token);
     try {
       final response = await http.patch(
         url,

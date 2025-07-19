@@ -92,7 +92,7 @@ class _ProfileSetup2ScreenState extends State<ProfileSetup2Screen> {
 
           Navigator.pushNamedAndRemoveUntil(
             context,
-            '/home_specialist',
+            '/login',
                 (route) => false,
           );
         }
