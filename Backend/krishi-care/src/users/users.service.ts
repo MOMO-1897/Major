@@ -205,6 +205,7 @@ export class UsersService {
       locationType: string;
       locationCoordinates: number[];
       locationUpdatedAt: string;
+      district: string;
     }) {
     // Convert locationUpdatedAt string to Date object before saving
     const updatedAt = new Date(locationData.locationUpdatedAt);
@@ -215,6 +216,7 @@ export class UsersService {
           locationType: locationData.locationType,
           locationCoordinates: locationData.locationCoordinates,
           locationUpdatedAt: updatedAt,
+          district: locationData.district,
         },
       },
       { upsert: true } // create document if not exists

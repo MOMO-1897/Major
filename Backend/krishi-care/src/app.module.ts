@@ -12,6 +12,7 @@ import * as mongoose from 'mongoose';
 import { Role, RoleDocument, RoleSchema, RoleType } from './schemas/role.schema';
 import { Model } from 'mongoose';
 import { ConfigModule } from '@nestjs/config';
+import { MapsModule } from './maps/maps.module';
 
 @Module({
   imports: [
@@ -42,8 +43,8 @@ import { ConfigModule } from '@nestjs/config';
     UsersModule,
     FilesModule,
     AuthModule,
-    ReportsModule, // Ensure ReportsModule is included here
-
+    ReportsModule,// Ensure ReportsModule is included here
+    MapsModule,
     // Serve static files (e.g., uploaded profile pictures, certification images)
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'), // Path to your local 'uploads' directory

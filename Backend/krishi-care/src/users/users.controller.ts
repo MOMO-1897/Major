@@ -75,11 +75,12 @@ export class UsersController {
       locationType: string;
       locationCoordinates: number[];
       locationUpdatedAt: string;
+      district: string;
     }
   ) {
 
     const userId = req.user.userId;
-    if (req.user.role !== 'SPECIALIST') {
+    if (req.user.role.toUpperCase() !== 'SPECIALIST') {
       throw new ForbiddenException('Only specialists can update location');
     }
 

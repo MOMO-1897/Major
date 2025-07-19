@@ -29,6 +29,8 @@ export class SpecialistProfile {
   @Prop()
   locationUpdatedAt?: Date;
 
+  @Prop()
+  district?: string;
   // One-to-one relationship with User:
   // This field links back to the User document.
   @Prop({ type: Types.ObjectId, ref: 'User', unique: true, required: true })
