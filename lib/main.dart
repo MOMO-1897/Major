@@ -14,6 +14,9 @@ import 'package:major/screens/profilesetup2_screen.dart';
 import 'package:major/screens/certification_screen.dart';
 import 'package:major/screens/welcome_screen.dart';
 import 'package:major/services/storage_service.dart';
+import 'package:major/screens/submit_report_screen.dart';
+import 'package:major/screens/report_detail.screen.dart';
+import 'package:major/screens/Maps/soil_map_screen.dart';
 
 
 void main(){
@@ -63,6 +66,9 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomeScreen(),
         '/home_specialist': (context) => HomeScreenSpecialist(),
         '/chat_list': (context) => ChatListScreen(),
+        '/submit_report_screen': (context) => SubmitReportScreen(),
+        '/report_detail_screen': (context) => ReportDetailScreen(),
+        '/soil-map': (context) => SoilMap(),
       },
     );
   }

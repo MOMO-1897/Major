@@ -94,7 +94,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // Add new report action
+                    Navigator.pushNamed(context, '/submit_report_screen');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green[600],
@@ -186,7 +186,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
   Widget _buildReportCard(Map<String, dynamic> report) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/report-detail', arguments: report);
+        Navigator.pushNamed(context, '/report_detail', arguments: report);
       },
       child: Container(
         decoration: BoxDecoration(
