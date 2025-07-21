@@ -36,7 +36,13 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
   void initState() {
     super.initState();
     _screens = [
-      HomeTabSpecialist(),
+      HomeTabSpecialist(
+        onViewAllPressed: () {
+          setState(() {
+            _currentIndex = 1;
+          });
+        },
+      ),
       ReportsSpecialist(),
       ScheduleSpecialist(),
     ];
@@ -207,8 +213,8 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
           unselectedItemColor: Colors.grey[400],
           items: [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Reports'),
-            BottomNavigationBarItem(icon: Icon(Icons.schedule), label: 'Schedules'),
+            BottomNavigationBarItem(icon: Icon(Icons.description), label: 'Reports'),
+            BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: 'Schedules'),
           ],
         ),
       ),
