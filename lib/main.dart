@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:major/screens/HomeScreenSpecialist.dart';
-import 'package:major/screens/visit_request.dart';
 import 'package:major/screens/Maps/soil_map_screen.dart';
 import 'package:major/screens/Message/chat_list.dart';
 import 'package:major/screens/Message/socket_service.dart';
@@ -15,7 +14,6 @@ import 'package:major/screens/profilesetup2_screen.dart';
 import 'package:major/screens/certification_screen.dart';
 import 'package:major/screens/welcome_screen.dart';
 import 'package:major/services/storage_service.dart';
-import 'package:major/screens/report-detail-specialist.dart';
 
 
 void main(){
@@ -65,8 +63,6 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomeScreen(),
         '/home_specialist': (context) => HomeScreenSpecialist(),
         '/chat_list': (context) => ChatListScreen(),
-        '/report-detail-specialist': (context) => ReportDetailSpecialist(),
-        '/visit_request': (context) => VisitRequest(),
       },
     );
   }

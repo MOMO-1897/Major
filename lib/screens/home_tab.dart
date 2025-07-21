@@ -69,13 +69,13 @@ class _HomeTabState extends State<HomeTab> {
               childAspectRatio: 1.2,
               children: [
                 _buildFeatureCard(
-                  'Submit Issue',
+                  'Submit Report',
                   'Get Started',
                   Icons.eco,
                   Colors.green[100]!,
                   Colors.green[600]!,
                       () {
-                    Navigator.pushNamed(context, '/submit-crop-issue');
+                    Navigator.pushNamed(context, '/submit_report_screen');
                   },
                 ),
                 _buildFeatureCard(
@@ -85,17 +85,18 @@ class _HomeTabState extends State<HomeTab> {
                   Colors.blue[100]!,
                   Colors.blue[600]!,
                       () {
-                    Navigator.pushNamed(context, '/soil-map');
-                  },
+                        Navigator.pushNamed(context, '/soil-map',);
+
+                      },
                 ),
                 _buildFeatureCard(
-                  'IOT Soil Data',
+                  'Nearby  Specialists',
                   'Get Started',
                   Icons.sensors,
                   Colors.orange[100]!,
                   Colors.orange[600]!,
                       () {
-                    Navigator.pushNamed(context, '/soil-test');
+                        Navigator.pushNamed(context, '/soil-map', );
                   },
                 ),
                 _buildFeatureCard(
@@ -184,7 +185,7 @@ class _HomeTabState extends State<HomeTab> {
   Widget _buildReportCard(Map<String, dynamic> report) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/report-detail', arguments: report);
+        Navigator.pushNamed(context, '/report_detail_screen', arguments: report);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -293,7 +294,7 @@ class _HomeTabState extends State<HomeTab> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/report-detail', arguments: report);
+                        Navigator.pushNamed(context, '/report_detail_screen', arguments: report);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green[600],
