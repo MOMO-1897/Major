@@ -1,5 +1,5 @@
 // src/users/users.controller.ts
-import { Controller, Post, Body, UseInterceptors, UploadedFiles, BadRequestException, Patch, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Body, UseInterceptors, UploadedFiles, BadRequestException, Patch, UseGuards, Request, ForbiddenException, Get, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { FilesService } from '../files/files.service';
@@ -85,5 +85,10 @@ export class UsersController {
     }
 
     return this.usersService.updateSpecialistLocation(userId, locationData);
+  }
+
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    return this.usersService.UserfindById(id);
   }
 }

@@ -222,4 +222,14 @@ export class UsersService {
       { upsert: true } // create document if not exists
     );
   }
+
+  async UserfindById(specialistId: string) {
+
+    const user = await this.userModel.findById(specialistId).lean();
+    if (!user) {
+      throw new NotFoundException(`User with id not found`);
+    }
+
+    return { user };
+  }
 }
