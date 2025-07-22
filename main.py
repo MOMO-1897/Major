@@ -11,6 +11,7 @@ import numpy as np
 import io
 import json # Import the json module
 import httpx # For making async HTTP requests to Gemini API
+import re # Import regular expression module for cleaning strings
 
 # --- Configuration ---
 # Path to your existing .keras model file
@@ -89,9 +90,12 @@ CUSTOM_OBJECTS = {
 GEMINI_API_KEY = "AIzaSyBNwIQ3hC4dmyN80bAK91EURbtUvFHJt5A" # <--- REPLACE THIS EMPTY STRING WITH YOUR ACTUAL GEMINI API KEY
 
 # The GEMINI_API_URL is constructed once based on the GEMINI_API_KEY set above.
-# If GEMINI_API_KEY is empty or invalid, API calls will likely fail,
-# but the check is no longer duplicated within the prediction logic.
 GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+
+# Flag to check if Gemini API is configured for use
+is_gemini_api_available = bool(GEMINI_API_KEY and GEMINI_API_KEY != "YOUR_ACTUAL_GEMINI_API_KEY_HERE")
+if not is_gemini_api_available:
+    print("WARNING: Gemini API Key is not set or is placeholder. Gemini API calls will be skipped.")
 
 # --- Initialize FastAPI App ---
 app = FastAPI(
@@ -172,85 +176,212 @@ async def predict_plant_disease(file: UploadFile = File(...)):
 
         predicted_label = CLASS_LABELS[predicted_class_index]
 
-        # --- Generate description based on prediction ---
-        disease_description = "Description not available." # Default in case of API failure
+        # --- Sanitize predicted_label: remove special characters, keep alphanumeric and spaces ---
+        # This will ensure cleaner text for the response and Gemini prompts.
+        sanitized_label = re.sub(r'[^a-zA-Z0-9\s]', '', predicted_label).strip()
 
-        # Check if the predicted label indicates a healthy plant
-        if "healthy" in predicted_label.lower():
-            # Extract plant name (e.g., "Apple" from "Apple healthy")
-            plant_type = predicted_label.split(' ')[0]
+        # --- Initialize description, causes, treatment, and prevention ---
+        disease_description = "Description not available."
+        disease_causes = ["Causes information not available."]
+        disease_treatment = ["Treatment information not available."]
+        disease_prevention = ["Prevention information not available."]
+
+        # --- Generate content based on prediction ---
+        if "healthy" in sanitized_label.lower(): # Use sanitized label for check
+            plant_type = sanitized_label.split(' ')[0]
+            # For healthy plants, generate description about the plant itself
             try:
-                # Prompt for a description of the healthy plant
-                prompt = f"Provide a very short description of a {plant_type} plant, focusing on its common characteristics, in about 20-30 words."
-                payload = {
-                    "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-                    "generationConfig": {
-                        "maxOutputTokens": 60 # Adjusted token limit for 20-30 words
+                if is_gemini_api_available:
+                    prompt_desc = f"Provide a very short description of a {plant_type} plant, focusing on its common characteristics, in about 20-30 words."
+                    payload_desc = {
+                        "contents": [{"role": "user", "parts": [{"text": prompt_desc}]}],
+                        "generationConfig": {"maxOutputTokens": 60}
                     }
-                }
-                headers = {'Content-Type': 'application/json'}
+                    headers = {'Content-Type': 'application/json'}
 
-                # Make the API call. If GEMINI_API_KEY is invalid, it will raise an error handled below.
-                async with httpx.AsyncClient() as client:
-                    gemini_response = await client.post(GEMINI_API_URL, headers=headers, json=payload, timeout=15.0)
-                    gemini_response.raise_for_status()
-                    gemini_result = gemini_response.json()
+                    async with httpx.AsyncClient() as client:
+                        gemini_response_desc = await client.post(GEMINI_API_URL, headers=headers, json=payload_desc, timeout=15.0)
+                        gemini_response_desc.raise_for_status()
+                        gemini_result_desc = gemini_response_desc.json()
 
-                    if gemini_result and gemini_result.get("candidates") and gemini_result["candidates"][0].get("content"):
-                        generated_text = gemini_result["candidates"][0]["content"]["parts"][0]["text"]
-                        disease_description = f"Perfectly healthy plant. {generated_text.strip()}"
-                    else:
-                        print(f"Gemini API response missing content for healthy plant: {gemini_result}")
-                        disease_description = "Perfectly healthy plant. No specific description available."
+                        if gemini_result_desc and gemini_result_desc.get("candidates") and gemini_result_desc["candidates"][0].get("content"):
+                            generated_text = gemini_result_desc["candidates"][0]["content"]["parts"][0]["text"]
+                            disease_description = f"Perfectly healthy plant. {generated_text.strip()}"
+                        else:
+                            print(f"Gemini API response missing content for healthy plant description: {gemini_result_desc}")
+                            disease_description = "Perfectly healthy plant. No specific description available."
+                else:
+                    disease_description = "Perfectly healthy plant."
             except Exception as e:
                 print(f"Error generating description for healthy plant: {e}")
                 disease_description = "Perfectly healthy plant. Description generation failed."
+            
+            # For healthy plants, causes, treatment, and prevention are not applicable
+            disease_causes = ["No specific disease causes."]
+            disease_treatment = ["No treatment needed. Continue good plant care."]
+            disease_prevention = ["Maintain optimal growing conditions, proper watering, and nutrition."]
+
+        elif "background without leaves" in sanitized_label.lower(): # Handle "Background without leaves" specifically
+            disease_description = "No leaves found in the image. Please upload an image containing plant leaves for analysis."
+            disease_causes = ["Image does not contain leaves."]
+            disease_treatment = ["No treatment applicable as no leaves were detected."]
+            disease_prevention = ["Ensure images contain clear plant leaves."]
+
         else:
-            # Existing logic for diseased plants
-            try:
-                # Prompt for a description around 50 words, focusing on symptoms and impact
-                prompt = f"Provide a brief description of the plant disease '{predicted_label}'. Describe its key symptoms and potential impact in about 50 words."
-                payload = {
-                    "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-                    "generationConfig": {
-                        "maxOutputTokens": 100 # Increased token limit to allow for ~50 words (approx 2 tokens per word)
+            # Logic for diseased plants
+            if is_gemini_api_available:
+                try:
+                    # Prompt for description (what it is)
+                    prompt_desc = f"Provide a brief description of what the plant disease '{sanitized_label}' is, in about 35 words." # Use sanitized label
+                    payload_desc = {
+                        "contents": [{"role": "user", "parts": [{"text": prompt_desc}]}],
+                        "generationConfig": {"maxOutputTokens": 100}
                     }
-                }
-                headers = {'Content-Type': 'application/json'}
+                    headers = {'Content-Type': 'application/json'}
 
-                # Make the API call. If GEMINI_API_KEY is invalid, it will raise an error handled below.
-                async with httpx.AsyncClient() as client:
-                    gemini_response = await client.post(GEMINI_API_URL, headers=headers, json=payload, timeout=15.0)
-                    gemini_response.raise_for_status()
-                    gemini_result = gemini_response.json()
+                    async with httpx.AsyncClient() as client:
+                        gemini_response_desc = await client.post(GEMINI_API_URL, headers=headers, json=payload_desc, timeout=15.0)
+                        gemini_response_desc.raise_for_status()
+                        gemini_result_desc = gemini_response_desc.json()
 
-                    if gemini_result and gemini_result.get("candidates") and gemini_result["candidates"][0].get("content"):
-                        generated_text = gemini_result["candidates"][0]["content"]["parts"][0]["text"]
-                        disease_description = generated_text.strip()
-                    else:
-                        print(f"Gemini API response missing content: {gemini_result}")
-            except httpx.RequestError as e:
-                print(f"Gemini API request failed: {e}")
-            except httpx.HTTPStatusError as e:
-                print(f"Gemini API HTTP error: {e.response.status_code} - {e.response.text}")
-            except json.JSONDecodeError as e:
-                print(f"Failed to decode Gemini API JSON response: {e}")
-            except Exception as e:
-                print(f"An unexpected error occurred during Gemini API call: {e}")
-        # --- End description generation ---
+                        if gemini_result_desc and gemini_result_desc.get("candidates") and gemini_result_desc["candidates"][0].get("content"):
+                            disease_description = gemini_result_desc["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        else:
+                            print(f"Gemini API response missing content for disease description: {gemini_result_desc}")
 
-        # Return the JSON response including the description
+                except httpx.RequestError as e:
+                    print(f"Gemini API request failed for description: {e}")
+                except httpx.HTTPStatusError as e:
+                    print(f"Gemini API HTTP error for description: {e.response.status_code} - {e.response.text}")
+                except json.JSONDecodeError as e:
+                    print(f"Failed to decode Gemini API JSON response for description: {e}")
+                except Exception as e:
+                    print(f"An unexpected error occurred during Gemini API call for description: {e}")
+
+                # Generate causes for diseased plants
+                try:
+                    prompt_causes = f"Provide 5 short causes for the plant disease '{sanitized_label}', each 3-5 words long. List them as bullet points." # Use sanitized label
+                    payload_causes = {
+                        "contents": [{"role": "user", "parts": [{"text": prompt_causes}]}],
+                        "generationConfig": {"maxOutputTokens": 70} # Sufficient for 5 points * 5 words
+                    }
+                    headers = {'Content-Type': 'application/json'}
+
+                    async with httpx.AsyncClient() as client:
+                        gemini_response_causes = await client.post(GEMINI_API_URL, headers=headers, json=payload_causes, timeout=15.0)
+                        gemini_response_causes.raise_for_status()
+                        gemini_result_causes = gemini_response_causes.json()
+
+                        if gemini_result_causes and gemini_result_causes.get("candidates") and gemini_result_causes["candidates"][0].get("content"):
+                            generated_text_causes = gemini_result_causes["candidates"][0]["content"]["parts"][0]["text"]
+                            disease_causes = [
+                                item.strip() for item in generated_text_causes.split('\n')
+                                if item.strip() and (item.strip().startswith('- ') or item.strip().startswith('* '))
+                            ]
+                            disease_causes = [item[2:] if item.startswith(('- ', '* ')) else item for item in disease_causes]
+                            disease_causes = [re.sub(r'[^a-zA-Z0-9\s]', '', cause).strip() for cause in disease_causes] # Remove special chars from causes
+                            disease_causes = disease_causes[:5] # Ensure max 5 items
+                        else:
+                            print(f"Gemini API response missing content for causes: {gemini_result_causes}")
+                            disease_causes = ["Causes generation failed."]
+
+                except httpx.RequestError as e:
+                    print(f"Gemini API request failed for causes: {e}")
+                except httpx.HTTPStatusError as e:
+                    print(f"Gemini API HTTP error for causes: {e.response.status_code} - {e.response.text}")
+                except json.JSONDecodeError as e:
+                    print(f"Failed to decode Gemini API JSON response for causes: {e}")
+                except Exception as e:
+                    print(f"An unexpected error occurred during Gemini API call for causes: {e}")
+
+                # Generate treatment for diseased plants
+                try:
+                    prompt_treatment = f"Provide 5 short general treatment methods for the plant disease '{sanitized_label}', each 3-5 words long. List them as bullet points." # Modified prompt, use sanitized label
+                    payload_treatment = {
+                        "contents": [{"role": "user", "parts": [{"text": prompt_treatment}]}],
+                        "generationConfig": {"maxOutputTokens": 70} # Sufficient for 5 points * 5 words
+                    }
+                    headers = {'Content-Type': 'application/json'}
+
+                    async with httpx.AsyncClient() as client:
+                        gemini_response_treatment = await client.post(GEMINI_API_URL, headers=headers, json=payload_treatment, timeout=15.0)
+                        gemini_response_treatment.raise_for_status()
+                        gemini_result_treatment = gemini_response_treatment.json()
+
+                        if gemini_result_treatment and gemini_result_treatment.get("candidates") and gemini_result_treatment["candidates"][0].get("content"):
+                            generated_text_treatment = gemini_result_treatment["candidates"][0]["content"]["parts"][0]["text"]
+                            disease_treatment = [
+                                item.strip() for item in generated_text_treatment.split('\n')
+                                if item.strip() and (item.strip().startswith('- ') or item.strip().startswith('* '))
+                            ]
+                            disease_treatment = [item[2:] if item.startswith(('- ', '* ')) else item for item in disease_treatment]
+                            disease_treatment = [re.sub(r'[^a-zA-Z0-9\s]', '', treatment).strip() for treatment in disease_treatment] # Remove special chars from treatment
+                            disease_treatment = disease_treatment[:5] # Ensure max 5 items
+                        else:
+                            print(f"Gemini API response missing content for treatment: {gemini_result_treatment}")
+                            disease_treatment = ["Treatment information generation failed."]
+
+                except httpx.RequestError as e:
+                    print(f"Gemini API request failed for treatment: {e}")
+                except httpx.HTTPStatusError as e:
+                    print(f"Gemini API HTTP error for treatment: {e.response.status_code} - {e.response.text}")
+                except json.JSONDecodeError as e:
+                    print(f"Failed to decode Gemini API JSON response for treatment: {e}")
+                except Exception as e:
+                    print(f"An unexpected error occurred during Gemini API call for treatment: {e}")
+
+                # Generate prevention for diseased plants
+                try:
+                    prompt_prevention = f"Provide 5 short general prevention methods for the plant disease '{sanitized_label}', each 3-5 words long. List them as bullet points." # Modified prompt, use sanitized label
+                    payload_prevention = {
+                        "contents": [{"role": "user", "parts": [{"text": prompt_prevention}]}],
+                        "generationConfig": {"maxOutputTokens": 70} # Sufficient for 5 points * 5 words
+                    }
+                    headers = {'Content-Type': 'application/json'}
+
+                    async with httpx.AsyncClient() as client:
+                        gemini_response_prevention = await client.post(GEMINI_API_URL, headers=headers, json=payload_prevention, timeout=15.0)
+                        gemini_response_prevention.raise_for_status()
+                        gemini_result_prevention = gemini_response_prevention.json()
+
+                        if gemini_result_prevention and gemini_result_prevention.get("candidates") and gemini_result_prevention["candidates"][0].get("content"):
+                            generated_text_prevention = gemini_result_prevention["candidates"][0]["content"]["parts"][0]["text"]
+                            disease_prevention = [
+                                item.strip() for item in generated_text_prevention.split('\n')
+                                if item.strip() and (item.strip().startswith('- ') or item.strip().startswith('* '))
+                            ]
+                            disease_prevention = [item[2:] if item.startswith(('- ', '* ')) else item for item in disease_prevention]
+                            disease_prevention = [re.sub(r'[^a-zA-Z0-9\s]', '', prevention).strip() for prevention in disease_prevention] # Remove special chars from prevention
+                            disease_prevention = disease_prevention[:5] # Ensure max 5 items
+                        else:
+                            print(f"Gemini API response missing content for prevention: {gemini_result_prevention}")
+                            disease_prevention = ["Prevention information generation failed."]
+
+                except httpx.RequestError as e:
+                    print(f"Gemini API request failed for prevention: {e}")
+                except httpx.HTTPStatusError as e:
+                    print(f"Gemini API HTTP error for prevention: {e.response.status_code} - {e.response.text}")
+                except json.JSONDecodeError as e:
+                    print(f"Failed to decode Gemini API JSON response for prevention: {e}")
+                except Exception as e:
+                    print(f"An unexpected error occurred during Gemini API call for prevention: {e}")
+            else: # If Gemini API is not available
+                print("Skipping Gemini API calls for diseased plant: API Key is not set or is placeholder.")
+                disease_description = "Description not available (API Key missing)."
+                disease_causes = ["Causes not available (API Key missing)."]
+                disease_treatment = ["Treatment information not available (API Key missing)."]
+                disease_prevention = ["Prevention information not available (API Key missing)."]
+
+        # Return the JSON response including all generated information
         return JSONResponse(content={
-            "predicted_class": predicted_label,
+            "disease": sanitized_label, # Use sanitized label in the response
             "confidence": round(predicted_confidence, 2),
-            "description": disease_description # Added description here
+            "description": disease_description,
+            "causes": disease_causes,
+            "treatment": disease_treatment,
+            "prevention": disease_prevention
         })
 
     except Exception as e:
         print(f"Prediction error: {e}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
-
-# --- Run the FastAPI application (for development) ---
-# To run this, save it as e.g., 'main.py' and execute: uvicorn main:app --reload
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000) # You can change the port if 8000 is in use
