@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart'; // This should be at the very top
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ProfileSetup1Screen extends StatefulWidget {
-  final String? userType;
-  final Map<String, dynamic>? profileData;
+  final Map<String, dynamic>? initialSignUpData;
 
-  const ProfileSetup1Screen({Key? key, this.userType, this.profileData}) : super(key: key);
+  const ProfileSetup1Screen({Key? key, this.initialSignUpData}) : super(key: key);
 
   @override
   _ProfileSetup1ScreenState createState() => _ProfileSetup1ScreenState();
@@ -15,6 +16,50 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _specializationController = TextEditingController();
+
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  void _navigateToNextStep() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_profileImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please upload a profile picture.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    Map<String, dynamic> combinedProfileData = {
+      'username': (widget.initialSignUpData?['username'] ?? '').toString(),
+      'password': (widget.initialSignUpData?['password'] ?? '').toString(),
+      'roleName': (widget.initialSignUpData?['roleName'] ?? 'SPECIALIST').toString(),
+      'fullName': _fullNameController.text.trim().toString(),
+      'phoneNumber': _phoneController.text.trim().toString(),
+      'specialization': _specializationController.text.trim().toString(),
+      'profilePicture': _profileImage,
+    };
+
+    Navigator.pushNamed(
+      context,
+      '/profile-setup-2',
+      arguments: combinedProfileData,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,23 +111,47 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
                   ),
                 ),
                 const SizedBox(height: 40),
+                // Profile Picture Picker
                 Center(
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey[300]!, width: 1.0),
+                  child: GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.grey[300]!, width: 2),
+                      ),
+                      child: _profileImage != null
+                          ? ClipOval(
+                        child: Image.file(
+                          _profileImage!,
+                          fit: BoxFit.cover,
+                          width: 120,
+                          height: 120,
+                        ),
+                      )
+                          : Icon(
+                        Icons.camera_alt,
+                        size: 50,
+                        color: Colors.grey[600],
+                      ),
                     ),
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Colors.grey[500],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: Text(
+                    'Upload Profile Picture (Required)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
                     ),
                   ),
                 ),
                 const SizedBox(height: 40),
+                // Full Name Input
                 const Text(
                   'Full Name',
                   style: TextStyle(
@@ -112,13 +181,17 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your full name';
+                    }
+                    if (value.trim().length < 2) {
+                      return 'Full name must be at least 2 characters';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 24),
+                // Phone Number Input
                 const Text(
                   'Phone Number',
                   style: TextStyle(
@@ -149,8 +222,16 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your phone number';
+                    }
+                    String cleanPhone = value.trim();
+                    if (cleanPhone.length < 10) {
+                      return 'Phone number must be at least 10 digits';
+                    }
+                    // Added basic regex for digits only
+                    if (!RegExp(r'^[0-9]+$').hasMatch(cleanPhone)) {
+                      return 'Phone number must contain only digits';
                     }
                     return null;
                   },
@@ -185,8 +266,11 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your specialization';
+                    }
+                    if (value.trim().length < 3) {
+                      return 'Specialization must be at least 3 characters';
                     }
                     return null;
                   },
@@ -196,24 +280,7 @@ class _ProfileSetup1ScreenState extends State<ProfileSetup1Screen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        Map<String, dynamic> profileData = {
-                          'username': widget.profileData?['username'] ?? '',
-                          'password': widget.profileData?['password'] ?? '',
-                          'role': widget.profileData?['role'] ?? widget.userType ?? 'specialist',
-                          'fullName': _fullNameController.text,
-                          'phone': _phoneController.text,
-                          'specialization': _specializationController.text,
-                        };
-
-                        Navigator.pushNamed(
-                          context,
-                          '/profile-setup-2',
-                          arguments: profileData,
-                        );
-                      }
-                    },
+                    onPressed: _navigateToNextStep,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[600],
                       shape: RoundedRectangleBorder(

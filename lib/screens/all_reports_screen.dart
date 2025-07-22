@@ -13,49 +13,57 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
     {
       'title': 'Wheat Leaf Rust',
       'time': '12hrs ago',
-      'description': 'What could be causing yellowing leaves and stunted growth in my tomato plants...',
+      'description':
+      'What could be causing yellowing leaves and stunted growth in my tomato plants...',
       'status': 'Scheduled',
       'statusColor': Colors.green[100]!,
       'category': 'Soil',
       'categoryColor': Colors.blue,
-      'imageUrl': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
+      'imageUrl':
+      'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
     },
     {
       'title': 'Spots on Tomato',
       'time': '12hrs ago',
-      'description': 'What could be causing yellowing leaves and stunted growth in my tomato plants...',
+      'description':
+      'What could be causing yellowing leaves and stunted growth in my tomato plants...',
       'status': 'Pending',
       'statusColor': Colors.orange[100]!,
       'category': 'Crop',
       'categoryColor': Colors.red,
-      'imageUrl': 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400&h=200&fit=crop',
+      'imageUrl':
+      'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400&h=200&fit=crop',
     },
     {
       'title': 'Wheat Leaf Rust',
       'time': '12hrs ago',
-      'description': 'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'status': 'Pending',
-      'statusColor': Colors.orange[100]!,
+      'description':
+      'What could be causing yellowing leaves and stunted growth in my tomato plants...',
+      'status': 'Completed',
+      'statusColor': Colors.grey[300]!,
       'category': 'Crop',
       'categoryColor': Colors.red,
-      'imageUrl': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
+      'imageUrl':
+      'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
     },
     {
       'title': 'Corn Blight Disease',
       'time': '1 day ago',
-      'description': 'Brown spots appearing on corn leaves with rapid spread...',
+      'description':
+      'Brown spots appearing on corn leaves with rapid spread...',
       'status': 'Scheduled',
       'statusColor': Colors.green[100]!,
       'category': 'Crop',
       'categoryColor': Colors.red,
-      'imageUrl': 'https://images.unsplash.com/photo-1551782450-17144efb9c50?w=400&h=200&fit=crop',
+      'imageUrl':
+      'https://images.unsplash.com/photo-1551782450-17144efb9c50?w=400&h=200&fit=crop',
     },
   ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -66,55 +74,44 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.grey[800]),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: Text(
-          'KrishiCare',
-          style: TextStyle(
-            color: Colors.green[700],
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Colors.grey[600]),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.chat_bubble_outline, color: Colors.grey[600]),
-            onPressed: () {},
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'),
-            ),
-          ),
-        ],
-      ),
-      body: Column(
+    return Material(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: EdgeInsets.all(16.0),
-            child: Text(
-              'All Reports',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Reports',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/submit_report_screen');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[600],
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Add New +',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           Container(
@@ -131,9 +128,10 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               tabs: [
-                Tab(text: 'All Reports'),
+                Tab(text: 'All'),
                 Tab(text: 'Pending'),
                 Tab(text: 'Scheduled'),
+                Tab(text: 'Completed'),
               ],
             ),
           ),
@@ -144,12 +142,12 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                 _buildReportsList('all'),
                 _buildReportsList('pending'),
                 _buildReportsList('scheduled'),
+                _buildReportsList('completed'),
               ],
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -158,10 +156,16 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
 
     switch (filter) {
       case 'pending':
-        filteredReports = _allReports.where((report) => report['status'] == 'Pending').toList();
+        filteredReports =
+            _allReports.where((report) => report['status'] == 'Pending').toList();
         break;
       case 'scheduled':
-        filteredReports = _allReports.where((report) => report['status'] == 'Scheduled').toList();
+        filteredReports =
+            _allReports.where((report) => report['status'] == 'Scheduled').toList();
+        break;
+      case 'completed':
+        filteredReports =
+            _allReports.where((report) => report['status'] == 'Completed').toList();
         break;
       default:
         filteredReports = _allReports;
@@ -182,7 +186,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
   Widget _buildReportCard(Map<String, dynamic> report) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/report-detail', arguments: report);
+        Navigator.pushNamed(context, '/report_detail', arguments: report);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -248,7 +252,11 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                     child: Text(
                       report['status'],
                       style: TextStyle(
-                        color: report['status'] == 'Scheduled' ? Colors.green[700] : Colors.orange[700],
+                        color: report['status'] == 'Scheduled'
+                            ? Colors.green[700]
+                            : report['status'] == 'Completed'
+                            ? Colors.grey[800]
+                            : Colors.orange[700],
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -318,45 +326,45 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
     );
   }
 
-  BottomNavigationBar _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: _currentIndex,
-      onTap: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
-        _handleBottomNavigation(index);
-      },
-      selectedItemColor: Colors.green[600],
-      unselectedItemColor: Colors.grey[400],
-      items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Soil Map'),
-        BottomNavigationBarItem(icon: Icon(Icons.science), label: 'Soil Test'),
-        BottomNavigationBarItem(icon: Icon(Icons.psychology), label: 'AI Diagnose'),
-        BottomNavigationBarItem(icon: Icon(Icons.description), label: 'Reports'),
-      ],
-    );
-  }
-
-  void _handleBottomNavigation(int index) {
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/home');
-        break;
-      case 1:
-        Navigator.pushNamed(context, '/soil-map');
-        break;
-      case 2:
-        Navigator.pushNamed(context, '/soil-test');
-        break;
-      case 3:
-        Navigator.pushNamed(context, '/ai-diagnosis');
-        break;
-      case 4:
-      // Already on reports screen
-        break;
-    }
-  }
+  // BottomNavigationBar _buildBottomNavigationBar() {
+  //   return BottomNavigationBar(
+  //     type: BottomNavigationBarType.fixed,
+  //     currentIndex: _currentIndex,
+  //     onTap: (index) {
+  //       setState(() {
+  //         _currentIndex = index;
+  //       });
+  //       _handleBottomNavigation(index);
+  //     },
+  //     selectedItemColor: Colors.green[600],
+  //     unselectedItemColor: Colors.grey[400],
+  //     items: [
+  //       BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+  //       BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Soil Map'),
+  //       BottomNavigationBarItem(icon: Icon(Icons.science), label: 'Soil Test'),
+  //       BottomNavigationBarItem(icon: Icon(Icons.psychology), label: 'AI Diagnose'),
+  //       BottomNavigationBarItem(icon: Icon(Icons.description), label: 'Reports'),
+  //     ],
+  //   );
+  // }
+  //
+  // void _handleBottomNavigation(int index) {
+  //   switch (index) {
+  //     case 0:
+  //       Navigator.pushReplacementNamed(context, '/home');
+  //       break;
+  //     case 1:
+  //       Navigator.pushNamed(context, '/soil-map');
+  //       break;
+  //     case 2:
+  //       Navigator.pushNamed(context, '/soil-test');
+  //       break;
+  //     case 3:
+  //       Navigator.pushNamed(context, '/ai-diagnosis');
+  //       break;
+  //     case 4:
+  //     // Already on reports screen
+  //       break;
+  //   }
+  // }
 }

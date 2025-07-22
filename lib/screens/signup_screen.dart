@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+
 
 class SignUpScreen extends StatefulWidget {
   @override
@@ -9,13 +11,54 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _isPasswordVisible = false;
   String userRole = '';
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     userRole = ModalRoute.of(context)?.settings.arguments as String? ?? 'farmer';
+    print('SignUpScreen: User role received: $userRole');
+  }
+
+  void _handleSignup() {
+    print('SignUpScreen: _handleSignup called.');
+    if (_formKey.currentState!.validate()) {
+      print('SignUpScreen: Form validated successfully.');
+
+      Map<String, dynamic> initialSignUpData = {
+        'username': _usernameController.text.trim(),
+        'password': _passwordController.text,
+        'roleName': userRole.toUpperCase(),
+      };
+      print('SignUpScreen: Initial sign-up data: $initialSignUpData');
+
+      if (userRole == 'farmer') {
+        print('SignUpScreen: Navigating to /profile-setup for Farmer.');
+        Navigator.pushNamed(
+          context,
+          '/profile-setup',
+          arguments: initialSignUpData,
+        );
+      } else if (userRole == 'specialist') {
+        print('SignUpScreen: Navigating to /profile-setup-1 for Specialist.');
+        Navigator.pushNamed(
+          context,
+          '/profile-setup-1',
+          arguments: initialSignUpData,
+        );
+      } else {
+        print('SignUpScreen: Unknown user role: $userRole. Cannot navigate.');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: Unknown user role selected.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      print('SignUpScreen: Form validation failed.');
+    }
   }
 
   @override
@@ -39,11 +82,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 SizedBox(height: 60),
-                Text(
+
+                Center(child: Text(
                   'Sign Up',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),),
+                SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    'Create your account to get started',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.right,
                   ),
                 ),
                 SizedBox(height: 40),
@@ -51,34 +106,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   'Username',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
                 SizedBox(height: 8),
                 TextFormField(
                   controller: _usernameController,
                   decoration: InputDecoration(
-                    hintText: 'Enter Username',
+                    hintText: 'Enter your username',
+                    hintStyle: TextStyle(color: Colors.grey[400]),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey[300]!),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey[300]!),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.green[600]!),
                     ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a username';
-                    }
-                    if (value.length < 3) {
-                      return 'Username must be at least 3 characters';
+                      return 'Please enter your username';
                     }
                     return null;
                   },
@@ -88,7 +142,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   'Password',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
                 SizedBox(height: 8),
@@ -96,24 +151,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _passwordController,
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
-                    hintText: 'Enter Password',
+                    hintText: 'Enter your password',
+                    hintStyle: TextStyle(color: Colors.grey[400]),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey[300]!),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey[300]!),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.green[600]!),
                     ),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.grey[600],
+                        color: Colors.grey,
                       ),
                       onPressed: () {
                         setState(() {
@@ -124,52 +180,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
+                      return 'Please enter your password';
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return 'Password must be at least 6 characters long';
                     }
                     return null;
                   },
                 ),
                 SizedBox(height: 40),
-                // Sign Up Button
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 56,
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Create profile data
-                        Map<String, dynamic> profileData = {
-                          'username': _usernameController.text,
-                          'password': _passwordController.text,
-                          'role': userRole,
-                        };
-
-                        // Navigate based on user role
-                        if (userRole == 'farmer') {
-                          Navigator.pushNamed(
-                            context,
-                            '/profile-setup',
-                            arguments: profileData,
-                          );
-                        } else if (userRole == 'specialist') {
-                          Navigator.pushNamed(
-                            context,
-                            '/profile-setup-1',
-                            arguments: profileData,
-                          );
-                        }
-                      }
-                    },
+                    onPressed: _handleSignup, // Call the new _handleSignup method
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[600],
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 0,
                     ),
-                    child: Text(
+                    child: const Text(
                       'Sign Up',
                       style: TextStyle(
                         fontSize: 16,
@@ -180,14 +212,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ),
                 SizedBox(height: 24),
-                Center(child: Text('or', style: TextStyle(color: Colors.grey[600]))),
-                SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    'Or',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 56,
                   child: OutlinedButton.icon(
                     onPressed: () {
                       // Handle Google sign up
+                      print('SignUpScreen: Google sign up pressed (not implemented).');
                     },
                     icon: Icon(Icons.g_mobiledata, color: Colors.red),
                     label: Text(
@@ -209,6 +250,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () {
+                      print('SignUpScreen: Navigating to /login.');
                       Navigator.pushNamed(context, '/login');
                     },
                     child: Text(
