@@ -1,15 +1,16 @@
 // src/users/users.controller.ts
-import { Controller, Post, Body, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, UseInterceptors, UploadedFiles, BadRequestException, Patch, UseGuards, Request, ForbiddenException, Get, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { FilesService } from '../files/files.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly filesService: FilesService,
-  ) {}
+  ) { }
 
   @Post()
   @UseInterceptors(
@@ -64,5 +65,30 @@ export class UsersController {
     };
 
     return this.usersService.create(dataToCreate);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('location')
+  async updateLocation(
+    @Request() req,
+    @Body() locationData: {
+      locationType: string;
+      locationCoordinates: number[];
+      locationUpdatedAt: string;
+      district: string;
+    }
+  ) {
+
+    const userId = req.user.userId;
+    if (req.user.role.toUpperCase() !== 'SPECIALIST') {
+      throw new ForbiddenException('Only specialists can update location');
+    }
+
+    return this.usersService.updateSpecialistLocation(userId, locationData);
+  }
+
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    return this.usersService.UserfindById(id);
   }
 }

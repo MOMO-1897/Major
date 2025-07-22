@@ -3,39 +3,40 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { User, RoleType, Prisma } from '@prisma/client';
+import { RoleType } from '../schemas/role.schema';
+import { UserDocument } from '../schemas/user.schema';
+import { Types } from 'mongoose';
 
-type UserWithRoleAndProfiles = Prisma.UserGetPayload<{
-  include: {
-    role: true;
-    farmerProfile: true;
-    specialistProfile: true;
-  };
-}>;
+type UserWithPopulatedFields = UserDocument & {
+  role: { _id: Types.ObjectId; name: RoleType };
+  farmerProfile?: { _id: Types.ObjectId; farmName?: string };
+  specialistProfile?: { _id: Types.ObjectId; specialization: string; certificationImage: string };
+};
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
-  async validateUser(username: string, pass: string): Promise<UserWithRoleAndProfiles | null> {
+  async validateUser(username: string, pass: string): Promise<UserWithPopulatedFields | null> {
     const user = await this.usersService.findOneByUsername(username);
     if (user && await bcrypt.compare(pass, user.password)) {
-      const { password, ...result } = user;
-      return result as UserWithRoleAndProfiles;
+      const userPlainObject = user; // user from findOneByUsername is already a plain object due to .lean()
+      const { password, ...result } = userPlainObject;
+      return result as UserWithPopulatedFields;
     }
     return null;
   }
 
-  async login(user: UserWithRoleAndProfiles) {
-    // --- MODIFIED PAYLOAD HERE ---
+  async login(user: UserWithPopulatedFields) {
     const payload = {
       username: user.username,
-      sub: user.id,
+      // Add non-null assertion (!) here
+      sub: user._id!.toHexString(), // MongoDB _id is ObjectId, convert to string for JWT
       role: user.role.name,
-      fullName: user.fullName, // <--- ADDED THIS LINE
+      fullName: user.fullName,
     };
     const accessToken = this.jwtService.sign(payload);
 
@@ -51,7 +52,8 @@ export class AuthService {
     return {
       access_token: accessToken,
       user: {
-        id: user.id,
+        // Add non-null assertion (!) here
+        id: user._id!.toHexString(), // Convert MongoDB ObjectId to string for frontend
         username: user.username,
         fullName: user.fullName,
         phoneNumber: user.phoneNumber,
