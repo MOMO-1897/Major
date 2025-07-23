@@ -3,6 +3,8 @@ import 'package:major/services/storage_service.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'home_screen.dart';
+import 'HomeScreenSpecialist.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -56,16 +58,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
             if (role=="FARMER"){
               await Future.delayed(Duration(milliseconds: 500));
-              Navigator.pushNamedAndRemoveUntil(
+              Navigator.pushAndRemoveUntil(
                 context,
-                '/home',
+                MaterialPageRoute(
+                  builder: (context) => HomeScreen(role: role),
+                ),
                     (route) => false,
               );
             }else{
               await Future.delayed(Duration(milliseconds: 500));
-              Navigator.pushNamedAndRemoveUntil(
+              Navigator.pushAndRemoveUntil(
                 context,
-                '/home_specialist',
+                MaterialPageRoute(
+                  builder: (context) => HomeScreenSpecialist(role: role),
+                ),
                     (route) => false,
               );
             }

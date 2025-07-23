@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurpleAccent),
+        fontFamily: 'Inter',
       ),
       debugShowCheckedModeBanner: false,
       home: SplashScreen(),
@@ -60,9 +61,9 @@ class MyApp extends StatelessWidget {
           final profileData = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
           return ProfileSetup2Screen(profileData: profileData);
         },
-        '/home': (context) => HomeScreen(),
-        '/home_specialist': (context) => HomeScreenSpecialist(),
-        '/chat_list': (context) => ChatListScreen(),
+        //'/home': (context) => HomeScreen(),
+        //'/home_specialist': (context) => HomeScreenSpecialist(),
+        //'/chat_list': (context) => ChatListScreen(),
       },
     );
   }

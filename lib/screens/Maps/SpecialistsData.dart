@@ -1,5 +1,6 @@
 class Specialist {
   final String id;
+  final String uid;
   final String fullName;
   final String phoneNumber;
   final String profilePictureUrl;
@@ -9,6 +10,7 @@ class Specialist {
 
   Specialist({
     required this.id,
+    required this.uid,
     required this.fullName,
     required this.phoneNumber,
     required this.profilePictureUrl,
@@ -23,6 +25,7 @@ class Specialist {
 
     return Specialist(
       id: json['_id'],
+      uid: user['_id'],
       fullName: user['fullName'],
       phoneNumber: user['phoneNumber'],
       profilePictureUrl: user['profilePictureUrl'],

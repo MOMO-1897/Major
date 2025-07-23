@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io'; // needed for FileImage
 import 'message.dart';
+import 'package:major/utils/constants.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -10,8 +11,9 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasText = message.text != null && message.text!.isNotEmpty;
-    final hasImage = message.imageUrl != null;
+    final hasText = message.content != null && message.content!.isNotEmpty;
+    final hasImage = message.mediaUrl != null && message.mediaUrl!.isNotEmpty;
+    final file = hasImage ? File(message.mediaUrl!) : null;
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -38,7 +40,7 @@ class MessageBubble extends StatelessWidget {
                         children: [
                           InteractiveViewer(
                             child: Center(
-                              child: Image.file(File(message.imageUrl!)),
+                              child: Image.file(File(message.mediaUrl!)),
                             ),
                           ),
                           Positioned(
@@ -57,7 +59,7 @@ class MessageBubble extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.file(
-                    File(message.imageUrl!),
+                    File(message.mediaUrl!),
                     width: 180,
                     height: 180,
                     fit: BoxFit.cover,
@@ -68,8 +70,8 @@ class MessageBubble extends StatelessWidget {
               SizedBox(height: 8),
             if (hasText)
               Text(
-                message.text!,
-                style: TextStyle(fontSize: 16),
+                message.content!,
+                style: TextStyle(fontFamily: 'Inter', fontSize: 16),
               ),
           ],
         ),

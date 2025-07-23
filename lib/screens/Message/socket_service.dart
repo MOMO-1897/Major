@@ -39,6 +39,12 @@ class SocketService {
     _socket!.onConnect((_) {
       print('Connected to socket server');
       print("Token used: $token");
+
+      // print("Is socket connected: ${_socket?.connected}");
+      // print("Listeners already on receive_message: ${_socket?.hasListeners('receive_message')}");
+      // listenForMessages((data){
+      //   print("Inline Listener: $data");
+      // });
     });
 
     _socket!.onDisconnect((_) {
@@ -63,7 +69,11 @@ class SocketService {
   }
 
   void listenForMessages(Function(dynamic) callback) {
-    _socket?.on('receive_message', callback);
+    print("Setting up Listener");
+    _socket?.on("receive_message", (data) {
+      print('Received receive_message event with data: $data');
+      callback(data);
+    });
   }
 
   void dispose() {

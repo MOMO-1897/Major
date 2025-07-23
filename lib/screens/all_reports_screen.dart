@@ -1,6 +1,22 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:major/utils/constants.dart';
+import 'report_detail.screen.dart';
+import 'submit_report_screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:major/services/storage_service.dart';
+import 'package:major/utils/constants.dart';
 
 class AllReportsScreen extends StatefulWidget {
+  final VoidCallback backbutton;
+
+  const AllReportsScreen({
+    super.key,
+    required this.backbutton,
+  });
+
   @override
   _AllReportsScreenState createState() => _AllReportsScreenState();
 }
@@ -9,6 +25,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
   late TabController _tabController;
   int _currentIndex = 4;
 
+  final List<Map<String, dynamic>> _allReports2 = [];
   final List<Map<String, dynamic>> _allReports = [
     {
       'title': 'Wheat Leaf Rust',
@@ -64,6 +81,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    fetchReports();
   }
 
   @override
@@ -71,82 +89,147 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
     _tabController.dispose();
     super.dispose();
   }
+  
+  Future<void> fetchReports() async{
+    String? currentUserId;
+
+    final token = await StorageService.getToken();
+    if (token == null) {
+      print("No token found");
+    } else {
+      try {
+        final payload = JwtDecoder.decode(token);
+        print("Decoded payload: $payload");
+        currentUserId= payload['sub'];
+        print(currentUserId);
+      } catch (e) {
+        print("Error decoding token: $e");
+      }
+    }
+
+    final url= Uri.parse('${ApiConstants.baseUrl}/reports');
+
+    try{
+      final response= await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'user-id': currentUserId ?? '',
+      });
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+
+        setState(() {
+          _allReports2.clear();
+          _allReports2.addAll(data.cast<Map<String, dynamic>>());
+        });
+
+        print(_allReports2);
+      } else {
+        print("Failed to fetch reports. Status code: ${response.statusCode}");
+      }
+    }catch(e){
+      print("No report data");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Reports',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          widget.backbutton();
+        }
+      },
+      child: Material(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Reports',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
                     ),
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Add new report action
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green[600],
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SubmitReportScreen(),
+                        ),
+                      );
+
+                      if (result == true) {
+                        fetchReports();
+                      }
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => SubmitReportScreen()
+                      //   ),
+                      // );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[600],
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Add New +',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    'Add New +',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                labelColor: Colors.green[600],
+                unselectedLabelColor: Colors.grey[500],
+                indicatorColor: Colors.green[600],
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                tabs: [
+                  Tab(text: 'All'),
+                  Tab(text: 'Pending'),
+                  Tab(text: 'Scheduled'),
+                  Tab(text: 'Completed'),
+                ],
+              ),
             ),
-            child: TabBar(
-              controller: _tabController,
-              labelColor: Colors.green[600],
-              unselectedLabelColor: Colors.grey[500],
-              indicatorColor: Colors.green[600],
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              tabs: [
-                Tab(text: 'All'),
-                Tab(text: 'Pending'),
-                Tab(text: 'Scheduled'),
-                Tab(text: 'Completed'),
-              ],
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildReportsList('all'),
+                  _buildReportsList('pending'),
+                  _buildReportsList('scheduled'),
+                  _buildReportsList('completed'),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildReportsList('all'),
-                _buildReportsList('pending'),
-                _buildReportsList('scheduled'),
-                _buildReportsList('completed'),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -157,18 +240,18 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
     switch (filter) {
       case 'pending':
         filteredReports =
-            _allReports.where((report) => report['status'] == 'Pending').toList();
+            _allReports2.where((report) => report['status'] == 'Pending').toList();
         break;
       case 'scheduled':
         filteredReports =
-            _allReports.where((report) => report['status'] == 'Scheduled').toList();
+            _allReports2.where((report) => report['status'] == 'Scheduled').toList();
         break;
       case 'completed':
         filteredReports =
-            _allReports.where((report) => report['status'] == 'Completed').toList();
+            _allReports2.where((report) => report['status'] == 'Completed').toList();
         break;
       default:
-        filteredReports = _allReports;
+        filteredReports = _allReports2;
     }
 
     return ListView.builder(
@@ -183,10 +266,24 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
     );
   }
 
+  String shortDescription(String? text, [int wordLimit = 6]) {
+    if (text == null || text.trim().isEmpty) return '';
+    final words = text.split(' ');
+    if (words.length <= wordLimit) return text;
+    return '${words.take(wordLimit).join(' ')} .....';
+  }
+
   Widget _buildReportCard(Map<String, dynamic> report) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/report-detail', arguments: report);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReportDetailScreen(
+              reportData: report, // replace with actual data map
+            ),
+          ),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
@@ -208,7 +305,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                 ClipRRect(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                   child: Image.network(
-                    report['imageUrl'],
+                    ApiConstants.baseUrl + report['imageUrl'],
                     height: 150,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -227,7 +324,11 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: report['categoryColor'],
+                      color: report['category']?.toString().toLowerCase() == 'soil'
+                          ? Colors.blue
+                          : report['category']?.toString().toLowerCase() == 'crop'
+                          ? Colors.red
+                          : Colors.grey, // fallback color if category is something else or null
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -246,7 +347,11 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: report['statusColor'],
+                      color: report['status'] == 'Scheduled'
+                          ? Colors.green[100]
+                          : report['status'] == 'Completed'
+                          ? Colors.grey[300]
+                          : Colors.orange[100],
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -271,7 +376,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    report['title'],
+                    report['reportTitle'],
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -280,7 +385,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                   ),
                   SizedBox(height: 4),
                   Text(
-                    report['time'],
+                    report['createdAt'],
                     style: TextStyle(
                       color: Colors.grey[500],
                       fontSize: 12,
@@ -288,7 +393,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                   ),
                   SizedBox(height: 8),
                   Text(
-                    report['description'],
+                    shortDescription(report['description']),
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 14,
@@ -299,7 +404,14 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/report-detail', arguments: report);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ReportDetailScreen(
+                              reportData: report, // replace with actual data map
+                            ),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green[600],
@@ -325,46 +437,4 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
       ),
     );
   }
-
-  // BottomNavigationBar _buildBottomNavigationBar() {
-  //   return BottomNavigationBar(
-  //     type: BottomNavigationBarType.fixed,
-  //     currentIndex: _currentIndex,
-  //     onTap: (index) {
-  //       setState(() {
-  //         _currentIndex = index;
-  //       });
-  //       _handleBottomNavigation(index);
-  //     },
-  //     selectedItemColor: Colors.green[600],
-  //     unselectedItemColor: Colors.grey[400],
-  //     items: [
-  //       BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-  //       BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Soil Map'),
-  //       BottomNavigationBarItem(icon: Icon(Icons.science), label: 'Soil Test'),
-  //       BottomNavigationBarItem(icon: Icon(Icons.psychology), label: 'AI Diagnose'),
-  //       BottomNavigationBarItem(icon: Icon(Icons.description), label: 'Reports'),
-  //     ],
-  //   );
-  // }
-  //
-  // void _handleBottomNavigation(int index) {
-  //   switch (index) {
-  //     case 0:
-  //       Navigator.pushReplacementNamed(context, '/home');
-  //       break;
-  //     case 1:
-  //       Navigator.pushNamed(context, '/soil-map');
-  //       break;
-  //     case 2:
-  //       Navigator.pushNamed(context, '/soil-test');
-  //       break;
-  //     case 3:
-  //       Navigator.pushNamed(context, '/ai-diagnosis');
-  //       break;
-  //     case 4:
-  //     // Already on reports screen
-  //       break;
-  //   }
-  // }
 }

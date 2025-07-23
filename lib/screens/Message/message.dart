@@ -1,37 +1,59 @@
 class Message {
   final String id;
-  final String? text;
-  final String? imageUrl;
+  final String conversationId;
   final String senderId;
-  final DateTime timestamp;
+  final String receiverId;
+  final String type;
+  final String? content;
+  final String? mediaUrl;
+  final bool read;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   Message({
     required this.id,
-    required this.text,
-    required this.imageUrl,
+    required this.conversationId,
     required this.senderId,
-    required this.timestamp,
+    required this.receiverId,
+    required this.type,
+    this.content,
+    this.mediaUrl,
+    this.read = false,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: json['id'] as String,
-      text: json['text'] as String?,
-      imageUrl: json['imageUrl'] as String?,
-      senderId: json['senderId'] as String,
-      timestamp: DateTime.parse(json['timestamp'] as String),
+      id: json['_id'] ?? '',
+      conversationId: json['conversationId'] ?? '',
+      senderId: json['senderId'] ?? '',
+      receiverId: json['receiverId'] ?? '',
+      type: json['type'] ?? 'TEXT',
+      content: json['content'],
+      mediaUrl: json['mediaUrl'],
+      read: json['read'] ?? false,
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
     );
   }
 
-
-  //to convert message back to JSON when sending it to server
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'text': text,
-      'imageUrl': imageUrl,
+      '_id': id,
+      'conversationId': conversationId,
       'senderId': senderId,
-      'timestamp': timestamp.toIso8601String(),
+      'receiverId': receiverId,
+      'type': type,
+      'content': content,
+      'mediaUrl': mediaUrl,
+      'read': read,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
+  }
+  @override
+  String toString() {
+    return 'Message(from: $senderId, to: $receiverId, content: $content, type: $type)';
   }
 }

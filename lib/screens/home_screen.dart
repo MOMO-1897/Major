@@ -5,22 +5,23 @@ import 'package:major/screens/ai_diagnosis_screen.dart';
 import 'package:major/screens/all_reports_screen.dart';
 import 'package:major/screens/home_tab.dart';
 import 'package:major/screens/soil_test_screen.dart';
+import 'package:major/screens/Message/chat_list.dart';
+import 'package:major/services/storage_service.dart';
 
 class HomeScreen extends StatefulWidget {
+  final String role;
+
+  const HomeScreen({required this.role, super.key});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final GlobalKey<SoilMapState> _soilMapKey = GlobalKey<SoilMapState>();
+
   int _currentIndex = 0;
 
-  // final List<Widget> _screens = [
-  //   HomeTab(),
-  //   SoilMap(),
-  //   SoilTestScreen(),
-  //   AiDiagnosisScreen(),
-  //   AllReportsScreen(),
-  // ];
   late final List<Widget> _screens;
 
   @override
@@ -30,15 +31,50 @@ class _HomeScreenState extends State<HomeScreen> {
       HomeTab(
         onViewAllPressed: () {
           setState(() {
-            _currentIndex = 4;
+            _currentIndex=4;
+          });
+        },
+        onViewSoilMapPressed: () {
+          setState(() {
+            _currentIndex = 1;
+          });
+        },
+        onViewAIPressed: (){
+          setState(() {
+            _currentIndex = 3;
           });
         },
       ),
-      SoilMap(),
+      SoilMap(key: _soilMapKey,
+        backbutton: (){
+          setState(() {
+            _currentIndex=0;
+          });
+        },
+      ),
+
       SoilTestScreen(),
-      AiDiagnosisScreen(),
-      AllReportsScreen(),
+      AiDiagnosisScreen(
+        backbutton: (){
+          setState(() {
+            _currentIndex=0;
+          });
+        },
+      ),
+      AllReportsScreen(
+        backbutton: (){
+          setState(() {
+            _currentIndex=0;
+          });
+        },
+      ),
     ];
+  }
+
+  void switchToSoilMap() {
+    setState(() {
+      _currentIndex = 1;
+    });
   }
 
   void _onTabTapped(int index) {
@@ -68,19 +104,24 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: _shouldAllowBack(),
+      canPop: false, // Always handle it manually
       onPopInvokedWithResult: (didPop, result) async {
-        if (!didPop) {
-          final ok = await _showExitConfirmation();
-          if (ok && mounted) {
-            SystemNavigator.pop();
-          }
+        if (_currentIndex != 0) {
+          setState(() {
+            _currentIndex = 0; // Go to HomeTab
+          });
+          return;
+        }
+
+        final ok = await _showExitConfirmation();
+        if (ok && mounted) {
+          SystemNavigator.pop();
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: Colors.white,
           elevation: 0,
           automaticallyImplyLeading: false,
           title: Text(
@@ -99,14 +140,51 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: Icon(Icons.chat_bubble_outline, color: Colors.grey[600]),
               onPressed: () {
-                Navigator.pushNamed(context, '/chat_list');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatListScreen(
+                      role: widget.role,
+                      specialistMap: widget.role == 'FARMER'
+                          ? () {
+                        switchToSoilMap();
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _soilMapKey.currentState?.switchToTab(1);
+                        });
+                        Navigator.pop(context);
+                      }
+                          : null,  // For specialists, no callback needed
+                    ),
+                  ),
+                );
               },
             ),
             Padding(
               padding: EdgeInsets.only(right: 16.0),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundImage: NetworkImage('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'),
+              child: PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'logout') {
+
+                    StorageService.clearAll();
+                    Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/login',
+                            (route) => false
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'logout',
+                    child: Text('Log out'),
+                  ),
+                ],
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundImage: NetworkImage(
+                    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+                  ),
+                ),
               ),
             ),
           ],

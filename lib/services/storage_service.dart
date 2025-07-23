@@ -61,5 +61,6 @@ class StorageService {
   static Future<void> clearAll() async {
     await init();
     await _prefs!.clear();
+    await _prefs!.setBool(_isLoggedInKey, false);
   }
 }

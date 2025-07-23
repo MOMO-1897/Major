@@ -6,6 +6,7 @@
         android:usesCleartextTraffic="true"
         android:label="major"
         android:name="${applicationName}"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
