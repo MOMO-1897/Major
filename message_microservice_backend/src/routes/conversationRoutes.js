@@ -3,10 +3,11 @@ const router = express.Router();
 const conversationController = require('../controllers/conversationControllers');
 const messageController = require('../controllers/messageControllers');
 
-router.post('/', conversationController.createOrFindConversation);           // create/find conversation
-router.get('/:userId', conversationController.getChatListForUser);            // get chat list
-//router.post('/:conversationId/message', conversationController.updateConversationAfterMessage); // add message/update last message
+router.post('/', conversationController.createOrFindConversation);
+router.get('/:userId', conversationController.getChatListForUser);
+//router.post('/:conversationId/message', conversationController.updateConversationAfterMessage);
 router.get('/messages/:conversationId', messageController.getMessagesByConversationId);
+router.get('/latest/messages', messageController.getLatestMessage);
 
 module.exports = router;
 

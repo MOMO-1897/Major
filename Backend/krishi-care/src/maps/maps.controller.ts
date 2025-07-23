@@ -20,5 +20,15 @@ export class MapsController {
 
     return { specialists, district, };
   }
+
+  @Get('farmLocation')
+  async getFarmLocation(@Request() req) {
+
+    const userId = req.headers['user-id'];
+    console.log(userId);
+    if (!userId) throw new BadRequestException('User ID header is missing.');
+
+    return this.mapsService.getFarmLocationById(userId);
+  }
 }
 

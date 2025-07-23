@@ -232,4 +232,15 @@ export class UsersService {
 
     return { user };
   }
+
+  async getUserImageUrl(id: string) {
+    const user = await this.userModel.findById(id).lean();
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    const { fullName, profilePictureUrl } = user;
+    return { fullName, profilePictureUrl };
+  }
 }

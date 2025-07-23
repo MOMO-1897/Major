@@ -87,8 +87,16 @@ export class UsersController {
     return this.usersService.updateSpecialistLocation(userId, locationData);
   }
 
+  @Get('image')
+  async getUserImage(@Request() req) {
+    const id = req.headers['user-id'];
+    return this.usersService.getUserImageUrl(id);
+  }
+
+
   @Get(':id')
   async getUserById(@Param('id') id: string) {
     return this.usersService.UserfindById(id);
   }
+
 }
