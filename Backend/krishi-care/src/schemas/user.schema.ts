@@ -35,6 +35,10 @@ export class User {
 
   @Prop({ type: Types.ObjectId, ref: 'FarmerProfile', unique: true, sparse: true })
   farmerProfile?: Types.ObjectId;
+
+  // Added isPremium field with a default value of false
+  @Prop({ default: false })
+  isPremium: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
