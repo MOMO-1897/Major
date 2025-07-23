@@ -23,9 +23,38 @@ export class Report {
   @Prop({ default: false }) // Boolean with default value of false
   soilData: boolean; // CHANGED: Now a boolean
 
-  // Optional: Link to the user who created the report
+  @Prop({ required: true })
+  farmLocation: string;
+
+  @Prop({ required: true, enum: ['Pending', 'Scheduled', 'Completed'], default: 'Pending' })
+  status: 'Pending' | 'Scheduled' | 'Completed';
+
+  @Prop()
+  scheduledAt?: Date;
+
+  @Prop()
+  completedAt?: Date;
+
+  @Prop({ default: false })
+  specialistVisited: boolean;
+
+  @Prop({ default: '' })
+  specialistSummary?: string;
+
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  specialistId?: Types.ObjectId;
+
+  @Prop()
+  scheduleDate?: string;
+
+  @Prop()
+  scheduleTime?: string;
+
+  @Prop()
+  fee?: number;
 }
 
 export const ReportSchema = SchemaFactory.createForClass(Report);

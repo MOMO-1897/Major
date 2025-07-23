@@ -87,8 +87,34 @@ export class UsersController {
     return this.usersService.updateSpecialistLocation(userId, locationData);
   }
 
+  @Get('image')
+  async getUserImage(@Request() req) {
+    const id = req.headers['user-id'];
+    return this.usersService.getUserImageUrl(id);
+  }
+
+
   @Get(':id')
   async getUserById(@Param('id') id: string) {
     return this.usersService.UserfindById(id);
+  }
+
+  // NEW ENDPOINT: Set User as Premium
+  // Removed @UseGuards(AuthGuard('jwt')) to make this endpoint accessible without authentication.
+  @Patch(':id/set-premium') // PATCH request to update a specific user's premium status
+  async setPremiumStatus(
+    @Param('id') id: string, // User ID from the URL parameter
+    // @Request() req, // Request object is no longer needed if no authentication is used
+  ) {
+    // Since authentication is removed, we also remove the authorization check.
+    // This endpoint will now allow anyone to set the premium status for any user ID provided in the URL.
+    // Use with caution in a production environment.
+    // const authenticatedUserId = req.user.userId;
+    // if (id !== authenticatedUserId) {
+    //   throw new ForbiddenException('You are not authorized to update another user\'s premium status.');
+    // }
+
+    // Call the UsersService to update the isPremium status
+    return this.usersService.setPremiumStatus(id);
   }
 }

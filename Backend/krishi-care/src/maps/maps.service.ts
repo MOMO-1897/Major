@@ -43,4 +43,13 @@ export class MapsService {
 
     return { specialists, district };
   }
+
+  async getFarmLocationById(userId: string) {
+    const farm = await this.farmerModel.findOne({ userId: new Types.ObjectId(userId) }, 'farmName farmLocation').exec();
+    if (!farm) {
+      throw new NotFoundException(`No farm found for user "${userId}".`);
+    }
+    return farm;
+
+  }
 }

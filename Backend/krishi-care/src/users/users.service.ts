@@ -16,7 +16,7 @@ type UserWithPopulatedFields = UserDocument & {
 };
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit { // Ensure OnModuleInit is implemented
   constructor(
     // Inject Mongoose models
     @InjectModel(User.name) private userModel: Model<UserDocument>,
@@ -231,5 +231,34 @@ export class UsersService {
     }
 
     return { user };
+  }
+
+  async getUserImageUrl(id: string) {
+    const user = await this.userModel.findById(id).lean();
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    const { fullName, profilePictureUrl } = user;
+    return { fullName, profilePictureUrl };
+  }
+
+  /**
+   * Sets the 'isPremium' status of a user to true.
+   * @param userId The ID of the user to update.
+   * @returns The updated user document.
+   */
+  async setPremiumStatus(userId: string): Promise<UserDocument> {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      { isPremium: true }, // Set isPremium to true
+      { new: true } // Return the updated document
+    ).exec();
+
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID "${userId}" not found.`);
+    }
+    return updatedUser;
   }
 }

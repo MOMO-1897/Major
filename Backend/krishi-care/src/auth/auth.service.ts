@@ -37,6 +37,7 @@ export class AuthService {
       sub: user._id!.toHexString(), // MongoDB _id is ObjectId, convert to string for JWT
       role: user.role.name,
       fullName: user.fullName,
+      isPremium: user.isPremium, // <--- ADDED: Include isPremium in JWT payload
     };
     const accessToken = this.jwtService.sign(payload);
 
@@ -59,6 +60,7 @@ export class AuthService {
         phoneNumber: user.phoneNumber,
         role: user.role.name,
         profilePictureUrl: user.profilePictureUrl,
+        isPremium: user.isPremium, // <--- ADDED: Include isPremium in the user response object
         ...profileSpecificData,
       },
     };

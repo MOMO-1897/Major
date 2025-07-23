@@ -1,5 +1,6 @@
 const Message = require('../models/message');
 const mongoose = require('mongoose');
+const Conversation = require('../models/conversation');
 
 async function saveMessage(data) {
   try {
@@ -34,10 +35,23 @@ async function saveMessage(data) {
   }
 }
 
-async function getMessagesByConversationId(conversationId) {
+async function getMessagesByConversationId(conversationId, userId) {
   if (!conversationId) throw new Error("conversationId is required");
 
   try {
+    if (userId) {
+      await Message.updateMany(
+        {
+          conversationId: new mongoose.Types.ObjectId(conversationId),
+          receiverId: new mongoose.Types.ObjectId(userId),
+          read: false
+        },
+        {
+          $set: { read: true }
+        }
+      );
+    }
+
     const messages = await Message.find({
       conversationId: new mongoose.Types.ObjectId(conversationId)
     }).sort({ createdAt: 1 });
@@ -48,8 +62,52 @@ async function getMessagesByConversationId(conversationId) {
   }
 }
 
+async function getLatestMessageById(userId) {
+  if (!userId) throw new Error("userId is required");
+
+  try {
+    const conversations = await Conversation.find({
+      participants: new mongoose.Types.ObjectId(userId)
+    }).select('_id');
+
+    if (conversations.length === 0) {
+      return [];
+    }
+
+    const conversationIds = conversations.map(conv => conv._id);
+
+    const latestMessages = await Message.aggregate([
+      {
+        $match: {
+          conversationId: { $in: conversationIds }
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $group: {
+          _id: "$conversationId",
+          latestMessage: { $first: "$$ROOT" }
+        }
+      },
+      {
+        $replaceRoot: { newRoot: "$latestMessage" }
+      },
+      {
+        $sort: { createdAt: -1 }
+      }
+    ]);
+    return latestMessages;
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   saveMessage,
   getMessagesByConversationId,
+  getLatestMessageById,
 };
 

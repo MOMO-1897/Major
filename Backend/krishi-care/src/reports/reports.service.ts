@@ -10,7 +10,7 @@ export class ReportsService {
   constructor(
     @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
     private filesService: FilesService, // Inject FilesService
-  ) {}
+  ) { }
 
   /**
    * Creates a new report.
@@ -23,12 +23,13 @@ export class ReportsService {
       reportTitle: string;
       category: string;
       description: string;
-      soilData: boolean; // CHANGED: Now boolean
+      soilData: boolean;
+      farmLocation: string;
       userId: string; // User ID who created the report
     },
     imageFile: Express.Multer.File,
   ): Promise<ReportDocument> {
-    const { reportTitle, category, description, soilData, userId } = reportData;
+    const { reportTitle, category, description, soilData, farmLocation, userId } = reportData;
 
     // Basic validation
     if (!reportTitle || !category || !description || userId === undefined || userId === null) { // userId check
@@ -53,8 +54,10 @@ export class ReportsService {
       description,
       imageUrl,
       soilData, // CHANGED: Assign soilData directly
-      isResolved: false, // Default value
-      userId: new Types.ObjectId(userId), // Convert string userId to ObjectId
+      farmLocation,
+      status: 'Pending',
+      userId: new Types.ObjectId(userId),
+
     });
 
     return newReport;
@@ -64,10 +67,26 @@ export class ReportsService {
    * Finds all reports.
    * @returns An array of report documents.
    */
-  async findAllReports(): Promise<ReportDocument[]> {
-    return this.reportModel.find().exec();
-  }
+  async findAllReports(userId: string): Promise<ReportDocument[]> {
+    const reports = await this.reportModel
+      .find({ userId: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .populate({
+        path: 'userId',
+        select: '_id fullName profilePictureUrl phoneNumber'
+      })
+      .populate({
+        path: 'specialistId',
+        select: '_id fullName profilePictureUrl phoneNumber'
+      })
+      .exec();
 
+    if (!reports || reports.length === 0) {
+      throw new NotFoundException(`No reports found for user "${userId}".`);
+    }
+
+    return reports;
+  }
   /**
    * Finds a single report by its ID.
    * @param id - The ID of the report.
@@ -94,39 +113,69 @@ export class ReportsService {
   async updateReport(
     id: string,
     updateData: Partial<{
-      reportTitle: string;
-      category: string;
-      description: string;
-      soilData: boolean; // CHANGED: Now boolean
-      isResolved: boolean;
+      specialistId: string;
+      status: string;
+      specialistSummary: string;
     }>,
-    imageFile?: Express.Multer.File,
   ): Promise<ReportDocument> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid Report ID format.');
     }
 
-    const report = await this.reportModel.findById(id).exec();
+    const report = await this.reportModel.findById(id);
     if (!report) {
       throw new NotFoundException(`Report with ID "${id}" not found.`);
     }
 
-    // Handle image update if a new file is provided
-    if (imageFile) {
-      updateData['imageUrl'] = `/uploads/${imageFile.filename}`;
-      // You might want to add logic here to delete the old image file from disk
+    // Update only allowed fields
+    if (updateData.specialistId) {
+      report.specialistId = new Types.ObjectId(updateData.specialistId);
+    }
+    if (updateData.status) {
+      report.status = updateData.status as 'Pending' | 'Scheduled' | 'Completed';
+    }
+    if (updateData.specialistSummary !== undefined) {
+      report.specialistSummary = updateData.specialistSummary;
     }
 
-    // Validate soilData if provided in update
-    if (updateData.soilData !== undefined) { // Check if it's explicitly provided
-      if (typeof updateData.soilData !== 'boolean') {
-        throw new BadRequestException('soilData must be a boolean value (true/false) for update.');
-      }
+    await report.save();
+
+    // Return the updated document
+    return report;
+  }
+
+  async updateReportAfterVisit(
+    id: string,
+    updateData: Partial<{
+      scheduleDate: string;
+      scheduleTime: string;
+      fee: string;
+    }>,
+  ): Promise<ReportDocument> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid Report ID format.');
     }
 
-    // Update the document
-    Object.assign(report, updateData);
-    return report.save();
+    const report = await this.reportModel.findById(id);
+    if (!report) {
+      throw new NotFoundException(`Report with ID "${id}" not found.`);
+    }
+
+    // Update only allowed fields
+    if (updateData.scheduleDate) {
+      report.scheduleDate = updateData.scheduleDate;
+    }
+    if (updateData.scheduleTime) {
+      report.scheduleTime = updateData.scheduleTime;
+    }
+    if (updateData.fee !== undefined) {
+      report.fee = Number(updateData.fee);
+    }
+
+    await report.save();
+
+    // Return the updated document
+    return report;
   }
 
   /**
@@ -143,4 +192,56 @@ export class ReportsService {
     }
     // You might want to add logic here to delete the associated image file from disk
   }
+
+  async findAllReportsSpecialist(): Promise<ReportDocument[]> {
+    const reports = await this.reportModel.find({ status: 'Pending' })
+      .populate({
+        path: 'userId',
+        select: '_id fullName profilePictureUrl phoneNumber'
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    if (!reports || reports.length === 0) {
+      throw new NotFoundException(`No reports found.`);
+    }
+
+    return reports;
+  }
+
+  async findLocalReports(location: string): Promise<ReportDocument[]> {
+    const reports = await this.reportModel.find({ farmLocation: location, status: 'Pending' })
+      .populate({
+        path: 'userId',
+        select: '_id fullName profilePictureUrl phoneNumber'
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    if (!reports || reports.length === 0) {
+      throw new NotFoundException(`No reports found.`);
+    }
+
+    return reports;
+  }
+
+  async findAllScheduledReports(specialistId: string): Promise<ReportDocument[]> {
+    const reports = await this.reportModel.find({
+      status: { $in: ['Scheduled', 'Completed'] },
+      specialistId: new Types.ObjectId(specialistId),  // filter by specialistId
+    })
+      .populate({
+        path: 'userId',
+        select: '_id fullName profilePictureUrl phoneNumber'
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    if (!reports || reports.length === 0) {
+      throw new NotFoundException(`No reports found.`);
+    }
+
+    return reports;
+  }
+
 }
