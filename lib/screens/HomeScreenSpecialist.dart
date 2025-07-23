@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:major/screens/ReportsSpecialist.dart';
 import 'package:major/screens/ScheduleSpecialist.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -28,6 +29,9 @@ class HomeScreenSpecialist extends StatefulWidget {
 class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
   int _currentIndex = 0;
   StreamSubscription<Position>? _positionSubscription;
+
+  String? fullName;
+  String? profilePictureUrl;
 
   final GlobalKey<ReportsSpecialistState> _reportkey = GlobalKey<ReportsSpecialistState>();
 
@@ -64,6 +68,7 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
   void initState() {
     super.initState();
     _requestLocation();
+    fetchImage();
     _currentIndex = widget.initialTabIndex;
   }
 
@@ -210,6 +215,54 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
     }
   }
 
+
+  Future<void> fetchImage() async{
+    String? currentUserId;
+
+    final token = await StorageService.getToken();
+    if (token == null) {
+      print("No token found");
+    } else {
+      try {
+        final payload = JwtDecoder.decode(token);
+        print("Decoded payload: $payload");
+        currentUserId= payload['sub'];
+        print(currentUserId);
+      } catch (e) {
+        print("Error decoding token: $e");
+      }
+    }
+
+    final url= Uri.parse('${ApiConstants.baseUrl}/users/image');
+
+    try{
+      final response= await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'user-id': currentUserId!,
+      });
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(data['fullName']);
+        print(data['profilePictureUrl']);
+
+        setState(() {
+          fullName = data['fullName'];
+          profilePictureUrl = data['profilePictureUrl'];
+        });
+
+        print("Full Name: $fullName");
+        print("Profile Picture URL: $profilePictureUrl");
+      } else {
+        print("Failed to fetch image data: ${response.statusCode}");
+      }
+
+    }catch(e){
+      print("No data");
+    }
+
+  }
+
   @override
   void dispose() {
     _positionSubscription?.cancel();
@@ -291,9 +344,9 @@ class _HomeScreenSpecialistState extends State<HomeScreenSpecialist> {
                 ],
                 child: CircleAvatar(
                   radius: 18,
-                  backgroundImage: NetworkImage(
-                    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-                  ),
+                  backgroundImage: profilePictureUrl != null
+                      ? NetworkImage('${ApiConstants.baseUrl}$profilePictureUrl')
+                      : AssetImage('assets/default_profile.png') as ImageProvider,
                 ),
               ),
             ),

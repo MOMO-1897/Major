@@ -73,6 +73,7 @@ class _HomeTabState extends State<HomeTab> {
     fetchReports();
   }
 
+  String? currentName;
   Future<void> fetchReports() async{
     String? currentUserId;
 
@@ -84,6 +85,7 @@ class _HomeTabState extends State<HomeTab> {
         final payload = JwtDecoder.decode(token);
         print("Decoded payload: $payload");
         currentUserId= payload['sub'];
+        currentName= payload['fullName'];
         print(currentUserId);
       } catch (e) {
         print("Error decoding token: $e");
@@ -123,7 +125,7 @@ class _HomeTabState extends State<HomeTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome, John Doe',
+            'Welcome, $currentName',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,

@@ -76,7 +76,23 @@ class _HomeTabSpecialistState extends State<HomeTabSpecialist> {
     fetchReportsSpecialists();
   }
 
+  String? currentUser;
+
   Future<void> fetchReportsSpecialists() async{
+    final token = await StorageService.getToken();
+    if (token == null) {
+      print("No token found");
+    } else {
+      try {
+        final payload = JwtDecoder.decode(token);
+        print("Decoded payload: $payload");
+        currentUser= payload['fullName'];
+        print(currentUser);
+      } catch (e) {
+        print("Error decoding token: $e");
+      }
+    }
+
 
     final url= Uri.parse('${ApiConstants.baseUrl}/reports/specialists');
 
@@ -110,7 +126,7 @@ class _HomeTabSpecialistState extends State<HomeTabSpecialist> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Welcome, John Doe',
+            'Welcome, $currentUser',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,

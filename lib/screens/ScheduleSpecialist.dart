@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:major/screens/ScheduleDetail.dart';
 import 'package:major/services/storage_service.dart';
 import 'package:major/utils/constants.dart';
 import 'package:http/http.dart' as http;
@@ -169,7 +170,12 @@ class _ScheduleSpecialistState extends State<ScheduleSpecialist> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/report-detail-specialist');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Scheduledetail(reportData: report),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green[600],

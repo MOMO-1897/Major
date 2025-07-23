@@ -6,6 +6,7 @@ import 'package:major/screens/visit-request.dart';
 import 'package:major/utils/constants.dart';
 import 'package:major/services/storage_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class ReportDetailSpecialist extends StatefulWidget {
   final Map<String, dynamic>? reportData;
@@ -143,6 +144,18 @@ class _ReportDetailSpecialistState extends State<ReportDetailSpecialist> {
       });
     }
 
+    final reportData = widget.reportData;
+
+    String formatDate(String rawDate) {
+      try {
+        final parsedDate = DateTime.parse(rawDate);
+        final formatter = DateFormat('MMM dd, yyyy – hh:mm a');
+        return formatter.format(parsedDate.toLocal());
+      } catch (e) {
+        return rawDate; // fallback if parsing fails
+      }
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -179,7 +192,7 @@ class _ReportDetailSpecialistState extends State<ReportDetailSpecialist> {
             Row(
               children: [
                 Text(
-                  widget.reportData?['createdAt'] ?? '',
+                  'Reported on: ${formatDate(reportData?['createdAt'] ?? '')}',
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 14,
