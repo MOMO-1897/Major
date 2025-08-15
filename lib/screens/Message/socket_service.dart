@@ -1,4 +1,5 @@
 import 'package:major/services/storage_service.dart';
+import 'package:major/utils/constants.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class SocketService {
@@ -23,8 +24,7 @@ class SocketService {
     }
 
     _socket = IO.io(
-      'http://192.168.1.83:4000',
-      //'http://192.168.20.160:4000',
+      '${ApiConstants.socketUrl}',
       <String, dynamic>{
         'transports': ['websocket'],
         'autoConnect': false,

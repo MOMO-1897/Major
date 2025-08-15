@@ -21,44 +21,6 @@ class ReportsSpecialistState extends State<ReportsSpecialist> with SingleTickerP
   int _currentIndex = 1;
   final List<Map<String, dynamic>> _allReports2 = [];
   final List<Map<String, dynamic>> _allReports3 = [];
-  final List<Map<String, dynamic>> _allReports = [
-    {
-      'title': 'Wheat Leaf Rust',
-      'time': '12hrs ago',
-      'location': '1.5km away',
-      'description': 'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'category': 'Soil',
-      'categoryColor': Colors.blue,
-      'imageUrl': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
-      'userImageUrl': 'https://randomuser.me/api/portraits/men/32.jpg',
-      'userName': 'Shyam Kumar',
-      'userFarm': 'Green Valley Farm',
-    },
-    {
-      'title': 'Spots on Tomato',
-      'time': '12hrs ago',
-      'location': '1.5km away',
-      'description': 'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'category': 'Crop',
-      'categoryColor': Colors.red,
-      'imageUrl': 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400&h=200&fit=crop',
-      'userImageUrl': 'https://randomuser.me/api/portraits/men/32.jpg',
-      'userName': 'Shyam Kumar',
-      'userFarm': 'Green Valley Farm',
-    },
-    {
-      'title': 'Tomato Blight',
-      'time': '12hrs ago',
-      'location': '1.5km away',
-      'description': 'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'category': 'Crop',
-      'categoryColor': Colors.red,
-      'imageUrl': 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
-      'userImageUrl': 'https://randomuser.me/api/portraits/men/32.jpg',
-      'userName': 'Shyam Kumar',
-      'userFarm': 'Green Valley Farm',
-    },
-  ];
 
   String _selectedCategory = 'All';
 
@@ -222,15 +184,23 @@ class ReportsSpecialistState extends State<ReportsSpecialist> with SingleTickerP
       return _selectedCategory == 'All' || (report['category'] ?? '') == _selectedCategory;
     }).toList();
 
-    return ListView.builder(
-      padding: EdgeInsets.all(16),
-      itemCount: filteredReports.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: 16),
-          child: _buildReportCard(filteredReports[index]),
-        );
+    return RefreshIndicator(
+      onRefresh: () async {
+        await fetchReportsSpecialists();
+        await fetchLocalReports();
       },
+      color: Colors.green,
+      backgroundColor: Colors.white,
+      child: ListView.builder(
+        padding: EdgeInsets.all(16),
+        itemCount: filteredReports.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: _buildReportCard(filteredReports[index]),
+          );
+        },
+      ),
     );
   }
 

@@ -119,109 +119,114 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome, $currentName',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+    return RefreshIndicator(
+      onRefresh: fetchReports,
+      color: Colors.green,
+      backgroundColor: Colors.white,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome, $currentName',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
             ),
-          ),
-          SizedBox(height: 24),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.2,
-            children: [
-              _buildFeatureCard(
-                'Submit Issue',
-                'Get Started',
-                Icons.eco,
-                Colors.green[50]!,
-                Colors.green[500]!,
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SubmitReportScreen(),
-                    ),
-                  );
-                },
-              ),
-              _buildFeatureCard(
-                'View Soil Map',
-                'Explore',
-                Icons.map,
-                Colors.blue[50]!,
-                Colors.blue[500]!,
-                () {
-                  widget.onViewSoilMapPressed();
-                },
-              ),
-              _buildFeatureCard(
-                'IOT Soil Data',
-                'Get Started',
-                Icons.sensors,
-                Colors.orange[50]!,
-                Colors.orange[500]!,
-                () {
-                  // Navigator.pushNamed(context, '/soil-test');
-                },
-              ),
-              _buildFeatureCard(
-                'AI Diagnosis',
-                'Get Started',
-                Icons.psychology,
-                Colors.red[50]!,
-                Colors.red[400]!,
-                () {
-                  widget.onViewAIPressed();
-                },
-              ),
-            ],
-          ),
-          SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Recent Reports',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+            SizedBox(height: 24),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.2,
+              children: [
+                _buildFeatureCard(
+                  'Submit Issue',
+                  'Get Started',
+                  Icons.eco,
+                  Colors.green[50]!,
+                  Colors.green[500]!,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SubmitReportScreen(),
+                      ),
+                    );
+                  },
                 ),
-              ),
-              GestureDetector(
-                onTap: widget.onViewAllPressed,
-                child: Text(
-                  'View All',
+                _buildFeatureCard(
+                  'View Soil Map',
+                  'Explore',
+                  Icons.map,
+                  Colors.blue[50]!,
+                  Colors.blue[500]!,
+                  () {
+                    widget.onViewSoilMapPressed();
+                  },
+                ),
+                _buildFeatureCard(
+                  'IOT Soil Data',
+                  'Get Started',
+                  Icons.sensors,
+                  Colors.orange[50]!,
+                  Colors.orange[500]!,
+                  () {
+                    // Navigator.pushNamed(context, '/soil-test');
+                  },
+                ),
+                _buildFeatureCard(
+                  'AI Diagnosis',
+                  'Get Started',
+                  Icons.psychology,
+                  Colors.red[50]!,
+                  Colors.red[400]!,
+                  () {
+                    widget.onViewAIPressed();
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Reports',
                   style: TextStyle(
-                    color: Colors.green[600],
-                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          ..._allReports2
-              .map(
-                (report) => Padding(
-                  padding: EdgeInsets.only(bottom: 16),
-                  child: _buildReportCard(report),
+                GestureDetector(
+                  onTap: widget.onViewAllPressed,
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      color: Colors.green[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
-              )
-              .toList(),
-        ],
+              ],
+            ),
+            SizedBox(height: 16),
+            ..._allReports2
+                .map(
+                  (report) => Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: _buildReportCard(report),
+                  ),
+                )
+                .toList(),
+          ],
+        ),
       ),
     );
   }

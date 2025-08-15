@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http; // Import for HTTP requests
-import 'dart:convert'; // Import for JSON decoding
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:major/utils/constants.dart';
 
 class UploadImageScreen extends StatefulWidget {
   const UploadImageScreen({super.key});
@@ -14,16 +15,12 @@ class UploadImageScreen extends StatefulWidget {
 class _UploadImageScreenState extends State<UploadImageScreen> {
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
-  bool _isLoading = false; // To show loading state during API call
-  Map<String, dynamic>? _diagnosisResult; // To store the API response
-  String? _errorMessage; // To store any error messages
+  bool _isLoading = false;
+  Map<String, dynamic>? _diagnosisResult;
+  String? _errorMessage;
   int _selectedTabIndex = 0;
 
-  // Base URL for your FastAPI service
-  // IMPORTANT: Replace with your actual FastAPI URL if not running locally
-  // If running on an Android emulator and FastAPI is on your host machine,
-  // use your machine's local IP address (e.g., 'http://192.168.1.X:8000')
-  final String _fastApiBaseUrl = 'http://192.168.1.83:8000'; // Changed to your IP address
+  final String _fastApiBaseUrl = '${ApiConstants.AIUrl}';
 
   Future<void> _pickImage(ImageSource source) async {
     setState(() {

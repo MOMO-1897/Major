@@ -26,56 +26,6 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
   int _currentIndex = 4;
 
   final List<Map<String, dynamic>> _allReports2 = [];
-  final List<Map<String, dynamic>> _allReports = [
-    {
-      'title': 'Wheat Leaf Rust',
-      'time': '12hrs ago',
-      'description':
-      'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'status': 'Scheduled',
-      'statusColor': Colors.green[100]!,
-      'category': 'Soil',
-      'categoryColor': Colors.blue,
-      'imageUrl':
-      'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
-    },
-    {
-      'title': 'Spots on Tomato',
-      'time': '12hrs ago',
-      'description':
-      'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'status': 'Pending',
-      'statusColor': Colors.orange[100]!,
-      'category': 'Crop',
-      'categoryColor': Colors.red,
-      'imageUrl':
-      'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400&h=200&fit=crop',
-    },
-    {
-      'title': 'Wheat Leaf Rust',
-      'time': '12hrs ago',
-      'description':
-      'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'status': 'Completed',
-      'statusColor': Colors.grey[300]!,
-      'category': 'Crop',
-      'categoryColor': Colors.red,
-      'imageUrl':
-      'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
-    },
-    {
-      'title': 'Corn Blight Disease',
-      'time': '1 day ago',
-      'description':
-      'Brown spots appearing on corn leaves with rapid spread...',
-      'status': 'Scheduled',
-      'statusColor': Colors.green[100]!,
-      'category': 'Crop',
-      'categoryColor': Colors.red,
-      'imageUrl':
-      'https://images.unsplash.com/photo-1551782450-17144efb9c50?w=400&h=200&fit=crop',
-    },
-  ];
 
   @override
   void initState() {
@@ -171,12 +121,6 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
                       if (result == true) {
                         fetchReports();
                       }
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => SubmitReportScreen()
-                      //   ),
-                      // );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[600],
@@ -254,15 +198,20 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
         filteredReports = _allReports2;
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.all(16),
-      itemCount: filteredReports.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: 16),
-          child: _buildReportCard(filteredReports[index]),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: fetchReports,
+      color: Colors.green,
+      backgroundColor: Colors.white,
+      child: ListView.builder(
+        padding: EdgeInsets.all(16),
+        itemCount: filteredReports.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: _buildReportCard(filteredReports[index]),
+          );
+        },
+      ),
     );
   }
 
@@ -280,7 +229,7 @@ class _AllReportsScreenState extends State<AllReportsScreen> with SingleTickerPr
           context,
           MaterialPageRoute(
             builder: (context) => ReportDetailScreen(
-              reportData: report, // replace with actual data map
+              reportData: report,
             ),
           ),
         );

@@ -26,50 +26,7 @@ class HomeTabSpecialist extends StatefulWidget {
 
 class _HomeTabSpecialistState extends State<HomeTabSpecialist> {
   final List<Map<String, dynamic>> _allReports2 = [];
-  final List<Map<String, dynamic>> _recentReports = [
-    {
-      'title': 'Wheat Leaf Rust',
-      'time': '12hrs ago',
-      'location': '1.5km away',
-      'description':
-          'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'category': 'Soil',
-      'categoryColor': Colors.blue,
-      'imageUrl':
-          'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
-      'userImageUrl': 'https://randomuser.me/api/portraits/men/32.jpg',
-      'userName': 'Shyam Kumar',
-      'userFarm': 'Green Valley Farm',
-    },
-    {
-      'title': 'Spots on Tomato',
-      'time': '12hrs ago',
-      'location': '1.5km away',
-      'description':
-          'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'category': 'Crop',
-      'categoryColor': Colors.red,
-      'imageUrl':
-          'https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400&h=200&fit=crop',
-      'userImageUrl': 'https://randomuser.me/api/portraits/men/32.jpg',
-      'userName': 'Shyam Kumar',
-      'userFarm': 'Green Valley Farm',
-    },
-    {
-      'title': 'Wheat Leaf Rust',
-      'time': '12hrs ago',
-      'location': '1.5km away',
-      'description':
-          'What could be causing yellowing leaves and stunted growth in my tomato plants...',
-      'category': 'Crop',
-      'categoryColor': Colors.red,
-      'imageUrl':
-          'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=200&fit=crop',
-      'userImageUrl': 'https://randomuser.me/api/portraits/men/32.jpg',
-      'userName': 'Shyam Kumar',
-      'userFarm': 'Green Valley Farm',
-    },
-  ];
+
   @override
   void initState() {
     super.initState();
@@ -120,104 +77,109 @@ class _HomeTabSpecialistState extends State<HomeTabSpecialist> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome, $currentUser',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+    return RefreshIndicator(
+      onRefresh: fetchReportsSpecialists,
+      color: Colors.green,
+      backgroundColor: Colors.white,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome, $currentUser',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
             ),
-          ),
-          SizedBox(height: 24),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.2,
-            children: [
-              _buildFeatureCard(
-                'All Reports',
-                'View All',
-                Icons.edit_document,
-                Colors.green[50]!,
-                Colors.green[500]!,
-                () {
-                  widget.onViewAllPressed();
-                },
-              ),
-              _buildFeatureCard(
-                'Local Reports',
-                'View All',
-                Icons.location_pin,
-                Colors.blue[50]!,
-                Colors.blue[500]!,
-                () {
-                  widget.reportLocal();
-                },
-              ),
-              _buildFeatureCard(
-                'Upcoming Visit',
-                'View All',
-                Icons.calendar_month,
-                Colors.orange[50]!,
-                Colors.orange[400]!,
-                () {
-                  widget.onSchedule();
-                },
-              ),
-              _buildFeatureCard(
-                'Your Statistics',
-                'View All',
-                Icons.graphic_eq_outlined,
-                Colors.red[100]!,
-                Colors.red[600]!,
-                () {
-                  Navigator.pushNamed(context, '/ai-diagnosis');
-                },
-              ),
-            ],
-          ),
-          SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Recent Reports',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
-              ),
-              GestureDetector(
-                onTap: widget.onViewAllPressed,
-                child: Text(
+            SizedBox(height: 24),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.2,
+              children: [
+                _buildFeatureCard(
+                  'All Reports',
                   'View All',
+                  Icons.edit_document,
+                  Colors.green[50]!,
+                  Colors.green[500]!,
+                  () {
+                    widget.onViewAllPressed();
+                  },
+                ),
+                _buildFeatureCard(
+                  'Local Reports',
+                  'View All',
+                  Icons.location_pin,
+                  Colors.blue[50]!,
+                  Colors.blue[500]!,
+                  () {
+                    widget.reportLocal();
+                  },
+                ),
+                _buildFeatureCard(
+                  'Upcoming Visit',
+                  'View All',
+                  Icons.calendar_month,
+                  Colors.orange[50]!,
+                  Colors.orange[400]!,
+                  () {
+                    widget.onSchedule();
+                  },
+                ),
+                _buildFeatureCard(
+                  'Your Statistics',
+                  'View All',
+                  Icons.graphic_eq_outlined,
+                  Colors.red[100]!,
+                  Colors.red[600]!,
+                  () {
+                    Navigator.pushNamed(context, '/ai-diagnosis');
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Reports',
                   style: TextStyle(
-                    color: Colors.green[600],
-                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          ..._allReports2
-              .map(
-                (report) => Padding(
-                  padding: EdgeInsets.only(bottom: 16),
-                  child: _buildReportCard(report),
+                GestureDetector(
+                  onTap: widget.onViewAllPressed,
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      color: Colors.green[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
-              )
-              .toList(),
-        ],
+              ],
+            ),
+            SizedBox(height: 16),
+            ..._allReports2
+                .map(
+                  (report) => Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: _buildReportCard(report),
+                  ),
+                )
+                .toList(),
+          ],
+        ),
       ),
     );
   }

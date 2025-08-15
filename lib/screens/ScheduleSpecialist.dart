@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:major/screens/ScheduleDetail.dart';
 import 'package:major/services/storage_service.dart';
@@ -69,44 +70,51 @@ class _ScheduleSpecialistState extends State<ScheduleSpecialist> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFFAFAFA),
+    return RefreshIndicator(
+      onRefresh: getSchedules,
+      color: Colors.green,
+      backgroundColor: Colors.white,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Upcoming Visits',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ..._allReports
-                .where((report) => report['status'] == 'Scheduled')
-                .map((report) => _buildVisitCard(report))
-                .toList(),
+        child: Material(
+          color: const Color(0xFFFAFAFA),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Upcoming Visits',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ..._allReports
+                    .where((report) => report['status'] == 'Scheduled')
+                    .map((report) => _buildVisitCard(report))
+                    .toList(),
 
-            const SizedBox(height: 24),
-            const Text(
-              'Past Visits',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ..._allReports
-                .where((report) =>
-            report['status'] == 'Completed' &&
-                report['specialistVisited'] == true)
-                .map((report) => _buildVisitCard(report))
-                .toList(),
+                const SizedBox(height: 24),
+                const Text(
+                  'Past Visits',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ..._allReports
+                    .where((report) =>
+                report['status'] == 'Completed' &&
+                    report['specialistVisited'] == true)
+                    .map((report) => _buildVisitCard(report))
+                    .toList(),
 
-            const SizedBox(height: 16),
-          ],
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
         ),
       ),
     );
