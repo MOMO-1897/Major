@@ -223,15 +223,19 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
     );
   }
 
-  async UserfindById(specialistId: string) {
 
-    const user = await this.userModel.findById(specialistId).lean();
+
+  async UserfindById(Id: string) {
+
+    const user = await this.userModel.findById(Id).lean();
     if (!user) {
       throw new NotFoundException(`User with id not found`);
     }
 
     return { user };
   }
+
+
 
   async getUserImageUrl(id: string) {
     const user = await this.userModel.findById(id).lean();
@@ -244,16 +248,12 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
     return { fullName, profilePictureUrl };
   }
 
-  /**
-   * Sets the 'isPremium' status of a user to true.
-   * @param userId The ID of the user to update.
-   * @returns The updated user document.
-   */
+
   async setPremiumStatus(userId: string): Promise<UserDocument> {
     const updatedUser = await this.userModel.findByIdAndUpdate(
       userId,
-      { isPremium: true }, // Set isPremium to true
-      { new: true } // Return the updated document
+      { isPremium: true },
+      { new: true }
     ).exec();
 
     if (!updatedUser) {
