@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:major/utils/constants.dart';
 import 'package:major/screens/Message/chat_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 class ReportDetailScreen extends StatefulWidget {
   final Map<String, dynamic>? reportData;
@@ -13,11 +16,35 @@ class ReportDetailScreen extends StatefulWidget {
 }
 
 class _ReportDetailScreenState extends State<ReportDetailScreen> {
-  bool? _visitAccepted;
+  String? _visitAccepted;
 
   @override
   void initState() {
     super.initState();
+    _visitAccepted= widget.reportData?['scheduleAccepted'];
+  }
+
+  Future<void> updateReport() async{
+    print(_visitAccepted);
+    final uid= widget.reportData?['userId']['_id'];
+    final reportid= widget.reportData?['_id'];
+
+    final url= Uri.parse('${ApiConstants.baseUrl}/reports/updateOffer/$reportid');
+    try{
+      final response= await http.patch(url, headers: {
+        'Content-Type': 'application/json',
+        'user-id':  uid,
+        'offer': _visitAccepted!,
+      });
+
+      if (response.statusCode == 200) {
+        print("Update Successful");
+      } else {
+        print("Failed to fetch reports. Status code: ${response.statusCode}");
+      }
+    }catch(e){
+      print("No report data");
+    }
   }
 
   @override
@@ -372,7 +399,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                 ),
               ),
               SizedBox(height: 16),
-              if (_visitAccepted == null)
+              if (reportData?['scheduleAccepted']=='Pending')
                 Row(
                   children: [
                     Expanded(
@@ -380,12 +407,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                         icon: Icon(Icons.check),
                         label: Text(
                           'Accept Visit',
-                          style: TextStyle(color: Colors.white), // Optional: not needed if style is set below
+                          style: TextStyle(color: Colors.white),
                         ),
                         onPressed: () {
                           setState(() {
-                            _visitAccepted = true;
+                            _visitAccepted = 'Accepted';
+                            reportData?['scheduleAccepted'] = 'Accepted';
                           });
+                          updateReport();
                         },
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
@@ -403,8 +432,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                         ),
                         onPressed: () {
                           setState(() {
-                            _visitAccepted = false;
+                            _visitAccepted = 'Declined';
+                            reportData?['scheduleAccepted'] = 'Declined';
                           });
+                          updateReport();
                         },
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
@@ -414,18 +445,18 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     ),
                   ],
                 )
-              else // show status container
+              else
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: _visitAccepted == true
+                    color: reportData?['scheduleAccepted']=='Accepted'
                         ? Colors.green[100]
                         : Colors.red[100],
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color:
-                      _visitAccepted == true ? Colors.green : Colors.red,
+                      reportData?['scheduleAccepted']=='Accepted' ? Colors.green : Colors.red,
                       width: 1.5,
                     ),
                   ),
@@ -433,21 +464,21 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        _visitAccepted == true
+                        reportData?['scheduleAccepted']=='Accepted'
                             ? Icons.check_circle_outline
                             : Icons.highlight_off,
                         color:
-                        _visitAccepted == true ? Colors.green : Colors.red,
+                        reportData?['scheduleAccepted']=='Accepted' ? Colors.green : Colors.red,
                       ),
                       SizedBox(width: 8),
                       Text(
-                        _visitAccepted == true
+                        reportData?['scheduleAccepted']=='Accepted'
                             ? 'Visit offer accepted'
                             : 'Visit offer declined',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: _visitAccepted == true
+                          color: reportData?['scheduleAccepted'] == 'Accepted'
                               ? Colors.green[800]
                               : Colors.red[800],
                         ),

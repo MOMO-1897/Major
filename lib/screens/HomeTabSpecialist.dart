@@ -69,6 +69,9 @@ class _HomeTabSpecialistState extends State<HomeTabSpecialist> {
         print('ALL: $_allReports2');
       } else {
         print("Failed to fetch reports. Status code: ${response.statusCode}");
+        setState(() {
+          _allReports2.clear();
+        });
       }
     }catch(e){
       print("No report data");
@@ -82,6 +85,7 @@ class _HomeTabSpecialistState extends State<HomeTabSpecialist> {
       color: Colors.green,
       backgroundColor: Colors.white,
       child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       HomeTab(
         onViewAllPressed: () {
           setState(() {
-            _currentIndex=4;
+            _currentIndex=3;
           });
         },
         onViewSoilMapPressed: () {
@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         onViewAIPressed: (){
           setState(() {
-            _currentIndex = 3;
+            _currentIndex = 2;
           });
         },
       ),
@@ -61,8 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
       ),
-
-      SoilTestScreen(),
+      //SoilTestScreen(),
       AiDiagnosisScreen(
         backbutton: (){
           setState(() {
@@ -257,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
           items: [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Soil Map'),
-            BottomNavigationBarItem(icon: Icon(Icons.science), label: 'Soil Test'),
+            //BottomNavigationBarItem(icon: Icon(Icons.science), label: 'Soil Test'),
             BottomNavigationBarItem(icon: Icon(Icons.psychology), label: 'AI Diagnose'),
             BottomNavigationBarItem(icon: Icon(Icons.description), label: 'Reports'),
           ],

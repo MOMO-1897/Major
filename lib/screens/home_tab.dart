@@ -124,6 +124,7 @@ class _HomeTabState extends State<HomeTab> {
       color: Colors.green,
       backgroundColor: Colors.white,
       child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

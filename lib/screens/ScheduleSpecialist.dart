@@ -75,6 +75,7 @@ class _ScheduleSpecialistState extends State<ScheduleSpecialist> {
       color: Colors.green,
       backgroundColor: Colors.white,
       child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
         child: Material(
           color: const Color(0xFFFAFAFA),
           child: SingleChildScrollView(
@@ -91,7 +92,9 @@ class _ScheduleSpecialistState extends State<ScheduleSpecialist> {
                 ),
                 const SizedBox(height: 16),
                 ..._allReports
-                    .where((report) => report['status'] == 'Scheduled')
+                    .where((report) =>
+                report['status'] == 'Scheduled' &&
+                    report['scheduleAccepted'] == 'Accepted')
                     .map((report) => _buildVisitCard(report))
                     .toList(),
 
@@ -107,7 +110,7 @@ class _ScheduleSpecialistState extends State<ScheduleSpecialist> {
                 ..._allReports
                     .where((report) =>
                 report['status'] == 'Completed' &&
-                    report['specialistVisited'] == true)
+                    report['specialistVisited'] == true && report['scheduleAccepted']=='Accepted')
                     .map((report) => _buildVisitCard(report))
                     .toList(),
 

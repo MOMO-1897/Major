@@ -30,6 +30,28 @@ class ScheduledetailState extends State<Scheduledetail> {
     super.dispose();
   }
 
+  Future<void> updateScheduleComplete() async{
+    final uid= widget.reportData?['userId']['_id'];
+    final reportid= widget.reportData?['_id'];
+
+    final url= Uri.parse('${ApiConstants.baseUrl}/reports/visitDone');
+    try{
+      final response= await http.patch(url, headers: {
+        'Content-Type': 'application/json',
+        'user-id':  uid,
+        'report-id': reportid
+      });
+
+      if (response.statusCode==200){
+        print("Update Successful");
+      } else {
+        print("Failed to fetch reports. Status code: ${response.statusCode}");
+      }
+    }catch(e){
+      print("PATCH request unsuccessful");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final category = widget.reportData?['category']?.toString().toLowerCase() ?? '';
@@ -278,7 +300,31 @@ class ScheduledetailState extends State<Scheduledetail> {
                 ],
               ),
             ),
-            SizedBox(height: 80), // Extra space for bottom navigation
+            SizedBox(height: 10),
+            widget.reportData?['specialistVisited'] == true
+                ? const SizedBox.shrink()
+                : SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  updateScheduleComplete();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[600],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text(
+                  'Visit Complete?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            )
           ],
         ),
       ),

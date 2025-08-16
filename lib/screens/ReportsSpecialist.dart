@@ -56,6 +56,9 @@ class ReportsSpecialistState extends State<ReportsSpecialist> with SingleTickerP
         print('ALL: $_allReports2');
       } else {
         print("Failed to fetch reports. Status code: ${response.statusCode}");
+        setState(() {
+          _allReports2.clear();
+        });
       }
     }catch(e){
       print("No report data");
@@ -83,6 +86,9 @@ class ReportsSpecialistState extends State<ReportsSpecialist> with SingleTickerP
         print('LOCAL: $_allReports3');
       } else {
         print("Failed to fetch reports. Status code: ${response.statusCode}");
+        setState(() {
+          _allReports3.clear();
+        });
       }
     }catch(e){
       print("No report data");
