@@ -1,0 +1,161 @@
+/* Custom Colors */
+:root {
+  --primary-green: #2E8B57;
+  --dark-blue: #0F172A;
+  --light-purple: #F8F8FF;
+}
+
+/* General Styling */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+.bg-light-purple {
+  background-color: var(--light-purple);
+}
+
+.text-primary-green {
+  color: var(--primary-green);
+}
+
+.text-dark-blue {
+  color: var(--dark-blue);
+}
+
+.btn-primary-green {
+  background-color: var(--primary-green);
+  color: white;
+  border: none;
+}
+
+.btn-primary-green:hover {
+  background-color: #246B45;
+  color: white;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 12px;
+  background-color: #fff;
+  border-color: #EFEFEF;
+}
+
+/* Small text */
+.text-sm {
+  font-size: 0.9rem;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background-color: #F9FAFB;
+  border-right: 1px solid #E5E7EB;
+}
+
+.sidebar .nav-link {
+  color: #0F172A;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.sidebar .nav-link.active,
+.sidebar .nav-link:hover {
+  background-color: #E6F4EA;
+  color: #2E8B57;
+}
+
+/* Main content */
+.main-content {
+  background-color: #F9FAFC;
+}
+
+/* Insight cards */
+.insight-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 20px;
+  transition: 0.2s ease;
+}
+
+.insight-card:hover {
+  box-shadow: 0 0 0 2px #D1E7DC;
+}
+
+.insight-link {
+  font-size: 0.875rem;
+  margin-top: 10px;
+  display: inline-block;
+  color: #2E8B57;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* Color utility classes */
+.text-primary-green {
+  color: #2E8B57;
+}
+
+.text-dark-blue {
+  color: #0F172A;
+}
+
+.bi-emoji-smile{
+    color: #43B75D;
+}
+
+.bi-person-badge{
+    color: #0095FF;
+}
+
+.bi-clock-history{
+    color: #FFAA00;
+}
+
+/* Recent Reports Table */
+.recent-reports-table thead {
+  background-color: #F1F5F9;
+}
+
+.recent-reports-table th {
+  color: #0F172A;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.recent-reports-table td {
+  color: #0F172A;
+  font-size: 14px;
+}
+
+.recent-reports-table td {
+  vertical-align: middle;
+}
+
+.recent-reports-table img {
+  object-fit: cover;
+}
+
+/* Badge color override if needed */
+.badge.bg-primary {
+  background-color: #3B82F6 !important; /* Blue for Soil */
+}
+
+.badge.bg-danger {
+  background-color: #EF4444 !important; /* Red for Crop */
+}
+.table-responsive {
+  background-color: #ffffff; /* clean white background */
+  border: 1px solid #E5E7EB; /* light gray stroke */
+  border-radius: 12px;
+  padding: 16px;
+}
+.recent-reports-table td:nth-child(4) {
+  max-width: 200px; /* adjust as needed */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

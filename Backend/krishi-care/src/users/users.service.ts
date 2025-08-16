@@ -16,19 +16,23 @@ type UserWithPopulatedFields = UserDocument & {
 };
 
 @Injectable()
-export class UsersService implements OnModuleInit { // Ensure OnModuleInit is implemented
+export class UsersService implements OnModuleInit {
   constructor(
-    // Inject Mongoose models
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
     @InjectModel(FarmerProfile.name) private farmerProfileModel: Model<FarmerProfileDocument>,
     @InjectModel(SpecialistProfile.name) private specialistProfileModel: Model<SpecialistProfileDocument>,
   ) { }
 
+  private async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10;
+    return bcrypt.hash(password, saltRounds);
+  }
+
   async onModuleInit() {
-    // --- Mongoose Role Seeding (Replaces PrismaService seeding) ---
-    console.log('Ensuring roles exist in MongoDB...');
+    console.log('Ensuring roles and default admin user exist...');
     try {
+      // 1. Ensure all necessary roles are seeded.
       await this.roleModel.findOneAndUpdate(
         { name: RoleType.FARMER },
         { $setOnInsert: { name: RoleType.FARMER } },
@@ -39,16 +43,41 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
         { $setOnInsert: { name: RoleType.SPECIALIST } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
+      const adminRole = await this.roleModel.findOneAndUpdate(
+        { name: RoleType.ADMIN },
+        { $setOnInsert: { name: RoleType.ADMIN } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
       console.log('Roles ensured successfully in MongoDB.');
-    } catch (error) {
-      console.error('Error during automatic role seeding for MongoDB:', error);
-    }
-    // --- End Mongoose Role Seeding ---
-  }
 
-  private async hashPassword(password: string): Promise<string> {
-    const saltRounds = 10;
-    return bcrypt.hash(password, saltRounds);
+      // 2. Check for the existence of an admin user and create one if it doesn't exist.
+      const adminUser = await this.userModel.findOne({ username: 'admin' }).exec();
+
+      if (adminUser) {
+        console.log('Admin user already exists. Skipping creation.');
+        return;
+      }
+
+      // Check if the adminRole was found or created
+      if (!adminRole) {
+        console.error('Admin role not found. Cannot create admin user.');
+        return;
+      }
+
+      const hashedPassword = await this.hashPassword('admin');
+
+      await this.userModel.create({
+        username: 'admin',
+        password: hashedPassword,
+        fullName: 'Administrator',
+        phoneNumber: '0000000000',
+        role: adminRole._id, // Assign the ADMIN role
+      });
+
+      console.log('Default admin user created successfully.');
+    } catch (error) {
+      console.error('Error during automatic database seeding:', error);
+    }
   }
 
   async findOneByUsername(username: string): Promise<UserWithPopulatedFields | undefined> {
@@ -56,25 +85,15 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
       .populate('role')
       .populate('farmerProfile')
       .populate('specialistProfile')
-      .lean<UserWithPopulatedFields>() // Use .lean() and cast here
+      .lean<UserWithPopulatedFields>()
       .exec();
-
-    // Explicitly return undefined if user is null
-    return user || undefined; // If user is null, it will be undefined in TS
+    return user || undefined;
   }
 
   async create(userData: Record<string, any>): Promise<UserWithPopulatedFields> {
     const {
-      username,
-      password,
-      fullName,
-      phoneNumber,
-      roleName,
-      profilePictureUrl,
-      farmName,
-      farmLocation,
-      specialization,
-      certificationImage
+      username, password, fullName, phoneNumber, roleName, profilePictureUrl,
+      farmName, farmLocation, specialization, certificationImage
     } = userData;
 
     if (typeof fullName !== 'string' || fullName.trim() === '') {
@@ -112,7 +131,6 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
 
     const hashedPassword = await this.hashPassword(password);
 
-    // Initialize variables to null/undefined to resolve TS2454
     let createdUser: UserDocument | null = null;
     let createdFarmerProfile: FarmerProfileDocument | null = null;
     let createdSpecialistProfile: SpecialistProfileDocument | null = null;
@@ -124,7 +142,7 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
         fullName,
         phoneNumber,
         profilePictureUrl: profilePictureUrl || null,
-        role: role._id, // Link to Role using its ObjectId
+        role: role._id,
       });
 
       if (role.name === RoleType.FARMER) {
@@ -137,9 +155,8 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
         createdFarmerProfile = await this.farmerProfileModel.create({
           farmName: farmName,
           farmLocation: farmLocation,
-          userId: createdUser._id, // Link to User using its ObjectId
+          userId: createdUser._id,
         });
-        // Update the User document to link to the new FarmerProfile
         await this.userModel.findByIdAndUpdate(createdUser._id, { farmerProfile: createdFarmerProfile._id }).exec();
 
       } else if (role.name === RoleType.SPECIALIST) {
@@ -152,26 +169,21 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
         createdSpecialistProfile = await this.specialistProfileModel.create({
           specialization: specialization,
           certificationImage: certificationImage,
-          userId: createdUser._id, // Link to User using its ObjectId
+          userId: createdUser._id,
         });
-        // Update the User document to link to the new SpecialistProfile
         await this.userModel.findByIdAndUpdate(createdUser._id, { specialistProfile: createdSpecialistProfile._id }).exec();
       }
 
-      // Fetch the final user with populated relations and convert to plain object
       const finalUser = await this.userModel.findById(createdUser._id)
         .populate('role')
         .populate('farmerProfile')
         .populate('specialistProfile')
-        .lean<UserWithPopulatedFields>() // Use .lean() here
+        .lean<UserWithPopulatedFields>()
         .exec();
 
-      // finalUser will be null if not found, but we just created it so it should exist
-      return finalUser!; // Use non-null assertion as it's guaranteed to exist here
+      return finalUser!;
 
     } catch (error: any) {
-      // Handle unique constraint errors (e.g., username, phoneNumber, userId in profiles)
-      // MongoDB duplicate key error code is 11000
       if (error.code === 11000) {
         if (error.message.includes('username_1') || error.message.includes('username')) {
           throw new BadRequestException('Username already exists.');
@@ -184,8 +196,7 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
         }
       }
 
-      // Clean up partially created records on error
-      if (createdUser && createdUser._id) { // Check _id exists before deleting
+      if (createdUser && createdUser._id) {
         await this.userModel.findByIdAndDelete(createdUser._id).exec();
       }
       if (createdFarmerProfile && createdFarmerProfile._id) {
@@ -207,10 +218,9 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
       locationUpdatedAt: string;
       district: string;
     }) {
-    // Convert locationUpdatedAt string to Date object before saving
     const updatedAt = new Date(locationData.locationUpdatedAt);
     return this.specialistProfileModel.updateOne(
-      { userId: userId }, // match by userId in SpecialistProfile collection
+      { userId: userId },
       {
         $set: {
           locationType: locationData.locationType,
@@ -219,35 +229,26 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
           district: locationData.district,
         },
       },
-      { upsert: true } // create document if not exists
+      { upsert: true }
     );
   }
 
-
-
   async UserfindById(Id: string) {
-
     const user = await this.userModel.findById(Id).lean();
     if (!user) {
       throw new NotFoundException(`User with id not found`);
     }
-
     return { user };
   }
 
-
-
   async getUserImageUrl(id: string) {
     const user = await this.userModel.findById(id).lean();
-
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-
     const { fullName, profilePictureUrl } = user;
     return { fullName, profilePictureUrl };
   }
-
 
   async setPremiumStatus(userId: string): Promise<UserDocument> {
     const updatedUser = await this.userModel.findByIdAndUpdate(
@@ -255,7 +256,6 @@ export class UsersService implements OnModuleInit { // Ensure OnModuleInit is im
       { isPremium: true },
       { new: true }
     ).exec();
-
     if (!updatedUser) {
       throw new NotFoundException(`User with ID "${userId}" not found.`);
     }

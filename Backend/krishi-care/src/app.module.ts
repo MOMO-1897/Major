@@ -4,15 +4,17 @@ import { AppController } from './app.controller';
 import { UsersModule } from './users/users.module';
 import { FilesModule } from './files/files.module';
 import { AuthModule } from './auth/auth.module';
-import { ReportsModule } from './reports/reports.module'; // Ensure ReportsModule is imported
+import { ReportsModule } from './reports/reports.module';
 import { MongooseModule, InjectModel } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import * as mongoose from 'mongoose';
 import { Role, RoleDocument, RoleSchema, RoleType } from './schemas/role.schema';
+import { SpecialistProfile, SpecialistProfileDocument, SpecialistProfileSchema } from './schemas/specialist-profile.schema';
 import { Model } from 'mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { MapsModule } from './maps/maps.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -21,13 +23,12 @@ import { MapsModule } from './maps/maps.module';
     }),
 
     // --- Mongoose Database Connection ---
-    // Hardcoded connection string for local MongoDB
-    // WARNING: Not suitable for production. Use environment variables for secure credentials.
     MongooseModule.forRoot('mongodb://127.0.0.1:27017/krishicare_db'),
 
-    // Register Role schema here so it can be injected and used in AppModule's onModuleInit
+    // Register schemas here so they can be injected and used in AppModule's onModuleInit
     MongooseModule.forFeature([
       { name: Role.name, schema: RoleSchema },
+      { name: SpecialistProfile.name, schema: SpecialistProfileSchema }, // Inject the SpecialistProfile schema
     ]),
 
     // Mongoose connection event listeners for logging
@@ -36,73 +37,70 @@ import { MapsModule } from './maps/maps.module';
       connection.on('connected', () => console.log('[MongoDB] Connected to database!'));
       connection.on('error', (err) => console.error('[MongoDB] Connection error:', err));
       connection.on('disconnected', () => console.log('[MongoDB] Disconnected from database.'));
-      return { module: MongooseModule }; // Must return the MongooseModule to be valid in imports
+      return { module: MongooseModule };
     })(),
 
     // Core application modules
     UsersModule,
     FilesModule,
     AuthModule,
-    ReportsModule,// Ensure ReportsModule is included here
+    ReportsModule,
+    AdminModule,
     MapsModule,
     // Serve static files (e.g., uploaded profile pictures, certification images)
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'), // Path to your local 'uploads' directory
-      serveRoot: '/uploads', // The URL path prefix where files will be accessible (e.g., http://localhost:3000/uploads/image.jpg)
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
     }),
   ],
   controllers: [AppController],
-  providers: [], // No global providers needed here beyond those exported by imported modules
+  providers: [],
 })
 export class AppModule implements OnModuleInit {
   constructor(
-    // Inject the Mongoose Role Model to perform seeding operations
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
+    // Inject the Mongoose SpecialistProfile Model
+    @InjectModel(SpecialistProfile.name) private specialistProfileModel: Model<SpecialistProfileDocument>,
   ) { }
 
-  /**
-   * onModuleInit hook is called once all modules have been initialized.
-   * This is used to programmatically seed the default roles (FARMER, SPECIALIST)
-   * into the MongoDB database on application startup.
-   */
   async onModuleInit() {
-    console.log('[AppModule] Ensuring roles exist in MongoDB...');
+    console.log('[AppModule] Ensuring roles and specialist profiles are up-to-date...');
     try {
-      // Find existing roles to avoid duplicate inserts
+      // --- Roles Seeding Logic (Existing) ---
       const existingRoles = await this.roleModel.find({ name: { $in: [RoleType.FARMER, RoleType.SPECIALIST] } }).exec();
       const existingRoleNames = new Set(existingRoles.map(role => role.name));
 
-      // Explicitly type rolesToInsert to avoid 'never[]' inference
-      const rolesToInsert: { name: RoleType }[] = []; // FIX: Added explicit type
-
-      // Check if FARMER role is missing and add to array if so
+      const rolesToInsert: { name: RoleType }[] = [];
       if (!existingRoleNames.has(RoleType.FARMER)) {
         rolesToInsert.push({ name: RoleType.FARMER });
       }
-      // Check if SPECIALIST role is missing and add to array if so
       if (!existingRoleNames.has(RoleType.SPECIALIST)) {
         rolesToInsert.push({ name: RoleType.SPECIALIST });
       }
 
-      // If there are roles to insert, perform the insertion
       if (rolesToInsert.length > 0) {
-        await this.roleModel.insertMany(rolesToInsert, { ordered: false }); // ordered: false allows inserting remaining documents even if one fails
-        // FIX: Ensure 'r' is typed correctly in map function
+        await this.roleModel.insertMany(rolesToInsert, { ordered: false });
         console.log(`[AppModule] Inserted new roles: ${rolesToInsert.map((r: { name: RoleType }) => r.name).join(', ')}`);
       } else {
         console.log('[AppModule] All required roles already exist.');
       }
+      
+      // --- Specialist Profile Migration Logic (New) ---
+      // This will add the 'isVerified: false' field to all existing documents
+      // that do not have this field. It's a safe and repeatable operation.
+      const updateResult = await this.specialistProfileModel.updateMany(
+        { isVerified: { $exists: false } }, // Find documents where the 'isVerified' field does not exist
+        { $set: { isVerified: false } }     // Set the field to false
+      );
+      console.log(`[AppModule] Specialist profiles migration complete. Updated ${updateResult.modifiedCount} old documents.`);
 
-      console.log('[AppModule] Roles ensured successfully in MongoDB.');
+      console.log('[AppModule] Database integrity check completed successfully.');
+
     } catch (error) {
-      // Log any errors during the role seeding process
-      console.error('[AppModule] Error during automatic role seeding for MongoDB:', error);
-      // For unique constraint errors (code 11000), it means another process might have inserted it concurrently.
-      // This is usually harmless for seeding.
+      console.error('[AppModule] Error during database initialization or migration:', error);
       if (error.code === 11000) {
-        console.warn('[AppModule] Role seeding encountered a duplicate key error, likely due to concurrent insert. This is usually harmless.');
+        console.warn('[AppModule] Encountered a duplicate key error, this is usually harmless during seeding.');
       } else {
-        // Re-throw other unexpected errors to ensure they are noticed
         throw error;
       }
     }

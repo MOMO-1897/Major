@@ -38,6 +38,7 @@ export class User {
 
   @Prop({ default: false })
   isPremium: boolean;
+
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
