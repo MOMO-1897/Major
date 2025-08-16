@@ -167,6 +167,25 @@ export class ReportsController {
     return this.reportsService.updateReportAfterVisit(reportId, updateData);
   }
 
+  @Patch('updateOffer/:id')
+  async updateReportOffer(
+    @Param('id') id: string,
+    @Request() req
+  ) {
+
+    const offer = req.headers['offer'];
+    return this.reportsService.updateScheduleOffer(id, offer);
+  }
+
+  @Patch('visitDone')
+  async updateSpecialistVisited(
+    @Request() req,
+  ) {
+    const reportid = req.headers['report-id'];
+
+    return this.reportsService.updateScheduleVisit(reportid);
+  }
+
   /**
    * DELETE /reports/:id
    * Deletes a report by ID.

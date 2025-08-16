@@ -244,4 +244,31 @@ export class ReportsService {
     return reports;
   }
 
+  async updateScheduleOffer(id: string, offer: string): Promise<void> {
+    const updateData: any = {
+      scheduleAccepted: offer,
+    };
+
+    if (offer === 'Declined') {
+      updateData.status = 'Completed';
+    }
+
+    const result = await this.reportModel.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+
+    if (!result) {
+      throw new NotFoundException(`Report with id ${id} not found`);
+    }
+  }
+
+  async updateScheduleVisit(id: string): Promise<void> {
+    await this.reportModel.findByIdAndUpdate(
+      id,
+      { $set: { specialistVisited: true, status: 'Completed' } },
+      { new: true }
+    );
+  }
 }

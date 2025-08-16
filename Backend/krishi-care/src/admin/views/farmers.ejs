@@ -111,14 +111,15 @@
                             <% farmers.forEach(farmer => { %>
                                 <tr>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            <img src="<%= farmer.userId.profilePictureUrl || 'https://placehold.co/40x40/E5E7EB/1F2937?text=U' %>" 
-                                                 class="rounded-circle me-2" width="40" height="40" 
-                                                 alt="<%= farmer.userId.fullName %> Photo">
-                                            <span><%= farmer.userId.fullName %></span>
-                                        </div>
-                                    </td>
-                                    <td><%= farmer.userId.phoneNumber %></td>
+  <div class="d-flex align-items-center">
+    <img src="<%= (farmer.userId && farmer.userId.profilePictureUrl) 
+                  ? farmer.userId.profilePictureUrl 
+                  : 'https://placehold.co/40x40/E5E7EB/1F2937?text=U' %>" 
+         class="rounded-circle me-2" width="40" height="40" 
+         alt="<%= farmer.userId ? farmer.userId.fullName : 'Unknown' %> Photo">
+    <span><%= farmer.userId ? farmer.userId.fullName : 'Unknown User' %></span>
+  </div>
+</td>                                    <td><%= farmer.userId ? farmer.userId.phoneNumber : 'Unkown number' %></td>
                                     <td><%= farmer.farmName %></td>
                                 </tr>
                             <% }) %>

@@ -55,6 +55,9 @@ export class Report {
 
   @Prop()
   fee?: number;
+
+  @Prop({ default: 'Pending' })
+  scheduleAccepted: string;
 }
 
 export const ReportSchema = SchemaFactory.createForClass(Report);
